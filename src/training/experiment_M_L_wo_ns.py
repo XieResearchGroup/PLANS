@@ -57,7 +57,7 @@ def experiment(data_path,
 
     # Train model2
     ## Initialize model2
-    model1 = HMLC_L(drop_rate=drop_rate)
+    model2 = HMLC_L(drop_rate=drop_rate)
     ## Training
     train_model(
         model2, x_train, y_train, x_test, y_val, y_eval,

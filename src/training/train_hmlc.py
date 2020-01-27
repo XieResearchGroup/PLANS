@@ -7,43 +7,25 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.metrics import Precision, Recall, AUC, Accuracy
 import numpy as np
+from sklearn.metrics import accuracy_score
 
-from models.hmlc import HMLC
+from models.hmlc import HMLC, HMLC_M, HMLC_L
 from data_loaders.cvs_loader import CVSLoader
+from utils.label_convertors import convert2vec, hierarchical, convert2hier
 
 
-def convert2vec(data, dtype=int):
-    data = data.tolist()
-    data = list(map(list, data))
-    data = [list(map(dtype, d)) for d in data]
-    data = np.array(data)
-    return data
-
-
-def _if_true_label(label):
-    try:
-        return np.expand_dims((np.sum(label, axis=1)>0).astype(np.int32), 1)
-    except np.AxisError:
-        return np.expand_dims(((label>0).astype(np.int32)), 1)
-
-
-def hierarchical(true_label):
-    l1 = _if_true_label(true_label)
-    l2_1 = _if_true_label(true_label[:, 0:2])
-    l2_2 = _if_true_label(
-        true_label[:, 2:4])
-    l2_3 = _if_true_label(true_label[:, 4])
-    return np.concatenate(
-        [l1, l2_1, l2_2, l2_3, true_label, true_label], axis=1)
-
-
-def main(data_path,
-         learning_rate=0.001,
-         drop_rate=0.3,
-         batch_size=128,
-         epochs=30):
-    # Initialize model
-    model = HMLC(drop_rate=drop_rate)
+def train_model(model, 
+                x_train,
+                y_train,
+                x_test,
+                y_val,
+                y_eval,
+                learning_rate,
+                drop_rate,
+                batch_size,
+                epochs,
+                log_path,
+                log_fh=None):
     ## Optimizer
     adam = Adam(learning_rate)
     ## Metrics
@@ -59,42 +41,131 @@ def main(data_path,
     )
 
     # Model training
-    ## Data
-    data_loader = CVSLoader(data_path)
-    x_train, y_train, x_test, y_test = data_loader.load_data(["ECFP", "Label"])
-    x_train = convert2vec(x_train, dtype=float)
-    y_train = convert2vec(y_train, dtype=int)
-    y_train = hierarchical(y_train)
-    y_train = y_train.astype(float)
-    x_test = convert2vec(x_test, dtype=float)
-    y_test = convert2vec(y_test, dtype=int)
-    # y_test = hierarchical(y_test)
-    # y_test = y_test.astype(float)
     ## Callbacks
-    now = datetime.now()
-    timestamp = now.strftime(r"%Y%m%d_%H%M%S")
-    tbcb = TensorBoard(os.path.join("..", "logs", timestamp))
+    tbcb = TensorBoard(log_path)
     ## fit
     model.fit(
         x=x_train,
         y=y_train,
         batch_size=batch_size,
         epochs=epochs,
-        callbacks=[tbcb]
-        # validation_data=[x_test, y_test]
+        callbacks=[tbcb],
+        validation_data=[x_test, y_val]
     )
 
-    # Predict labels for unlabeled data
+    # Model evaluation
+    evaluation = np.round(model.predict(x_test))[:, -5:]
+    acc_score = accuracy_score(
+        np.squeeze(y_eval.reshape(1, -1)),
+        np.squeeze(evaluation.reshape(1, -1)))
+
+    # Show and save training results
+    print("acc_score is: {}".format(acc_score))
+    if log_fh is not None:
+        print("acc_score is: {}".format(acc_score), file=log_fh)
+
+
+def fill_unlabeled(predictions, data_unlabeled):
+    """ Fill the unlabeled blanks in data_unlabeled with predicted labels
+    predictions (numpy.array): predicted labels, shape is (?, 5)
+    data_unlabeled (numpy.array): str, unlabeled data in "1_10_"-like format
+    ========================================================================
+    return: numpy.array
+    """
+    data_labeled = np.zeros(predictions.shape)
+    for i, data in enumerate(data_unlabeled):
+        labeled = list(data)
+        for j, label in enumerate(labeled):
+            try:
+                labeled[j] = int(label)
+            except ValueError:
+                labeled[j] = predictions[i, j]
+        data_labeled[i] = labeled
+    return data_labeled
+
+
+def main(data_path,
+         DataLoader=CVSLoader,
+         columns=["ECFP", "Label"],
+         learning_rate=0.001,
+         drop_rate=0.3,
+         batch_size=128,
+         epochs=30,
+         log_path="../logs"):
+    # Data
+    data_loader = DataLoader(data_path)
+    x_train, y_train, x_test, y_test = data_loader.load_data(columns)
+
+    x_train = convert2vec(x_train, dtype=float)
+    y_train = convert2hier(y_train, dtype=float)
+    
+    x_test = convert2vec(x_test, dtype=float)
+    y_val = convert2hier(y_test, dtype=float) # for validation during training
+    y_eval = convert2vec(y_test, dtype=int)   # for evaluation after training
+    
     data_pred = data_loader.load_unlabeled(["ECFP", "Label"])
     x_pred = data_pred[:, 0]
     x_pred = convert2vec(x_pred, dtype=float)
-    predictions = model.predict(x_pred)
-    log_path = os.path.join("..", "logs", timestamp, "predictions.txt")
-    with open(log_path, "w") as f:
-        np.savetxt(f, predictions)
-        np.savetxt(f, data_pred[:, 1], fmt="%s")
 
+    # Open log
+    now = datetime.now()
+    timestamp = now.strftime(r"%Y%m%d_%H%M%S")
+    log_path = os.path.sep.join(log_path.split("/"))
+    log_path = os.path.join(log_path, timestamp)
+    os.makedirs(log_path, exist_ok=True)
+    log_f_path = os.path.join(log_path, "logs.txt")
+    log_f = open(log_f_path, "w")
 
+    # Train model1
+    ## Initialize model1
+    model1 = HMLC(drop_rate=drop_rate)
+    ## Training
+    train_model(
+        model1, x_train, y_train, x_test, y_val, y_eval,
+        learning_rate, drop_rate, batch_size, epochs, log_path, log_f
+    )
+
+    ## Predict labels for unlabeled data with model1
+    predictions = model1.predict(x_pred)[:, -5:]
+    y_pred = fill_unlabeled(predictions, data_pred[:, 1])
+    y_pred = convert2hier(np.round(y_pred), dtype=float)
+
+    ## Combine labeled and unlabeled training data
+    x_mix = np.concatenate([x_train, x_pred], axis=0)
+    y_mix = np.concatenate([y_train, y_pred], axis=0)
+    randomed_idx = np.random.permutation(x_mix.shape[0])
+    np.take(x_mix, randomed_idx, axis=0, out=x_mix)
+    np.take(y_mix, randomed_idx, axis=0, out=y_mix)
+
+    # Train model2
+    model2 = HMLC_M(drop_rate=drop_rate)
+    ## Training
+    train_model(
+        model2, x_mix, y_mix, x_test, y_val, y_eval,
+        learning_rate, drop_rate, batch_size, epochs, log_path, log_f
+    )
+
+    ## Predict labels for unlabeled data with model2
+    predictions = model2.predict(x_pred)[:, -5:]
+    y_pred = fill_unlabeled(predictions, data_pred[:, 1])
+    y_pred = convert2hier(np.round(y_pred), dtype=float)
+
+    ## Combine labeled and unlabeled training data
+    x_mix = np.concatenate([x_train, x_pred], axis=0)
+    y_mix = np.concatenate([y_train, y_pred], axis=0)
+    randomed_idx = np.random.permutation(x_mix.shape[0])
+    np.take(x_mix, randomed_idx, axis=0, out=x_mix)
+    np.take(y_mix, randomed_idx, axis=0, out=y_mix)
+
+    # Train model3
+    model3 = HMLC_L(drop_rate=drop_rate)
+    ## Training
+    train_model(
+        model3, x_mix, y_mix, x_test, y_val, y_eval,
+        learning_rate, drop_rate, batch_size, epochs, log_path, log_f
+    )
+    log_f.close()
+    
 
 
 if __name__ == "__main__":

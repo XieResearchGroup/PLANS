@@ -21,6 +21,7 @@ class HMLC(Model):
                  drop_rate=0.3):
         super(HMLC, self).__init__()
         self.beta = beta
+        self.fp_len = fp_len
         self.l1_len = l1_len
         self.l2_len = l2_len
         self.l3_len = l3_len
@@ -52,24 +53,16 @@ class HMLC(Model):
         out_l3 = self.local_dense3(in_g3)
 
         in_g4 = self.add3([inputs, out_g3])
-        if training:
-            in_g4 = self.dropout(in_g4)
+        in_g4 = self.dropout(in_g4)
 
         out_g4 = self.global_dense4(in_g4)
         out_global = math.multiply(self.beta, out_g4)
         out_local = math.multiply(1-self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
-        if training:
-            final_out = tf.concat(
-                [out_l1, out_l2, out_l3, global_local_sum], axis=1)
-            final_out = tf.sigmoid(final_out)
-        else:
-            final_out = tf.nn.sigmoid(global_local_sum)
-        # else:
-            # final_out = tf.keras.backend.sigmoid(global_local_sum)
-            # final_out = tf.sigmoid(global_local_sum)
-
+        
+        final_out = tf.sigmoid(tf.concat(
+            [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out
 
     def training_loss(self, y_true, y_pred, hier_vio_coef=0.1):
@@ -113,3 +106,93 @@ class HMLC(Model):
         hier_viol = tf.multiply(
             hier_vio_coef, (l1_l2 + l2_l3_1 + l2_l3_2 + l2_l3_3))
         return hier_viol
+
+
+class HMLC_M(HMLC):
+
+    def __init__(self, *args, **kwargs):
+        super(HMLC_M, self).__init__(*args, **kwargs)
+        self.global_dense4 = Dense(int(self.fp_len/2), activation="elu")
+        self.global_dense5 = Dense(self.l3_len, activation=None)
+        self.local_dense1_1 = Dense(self.fp_len, activation="elu")
+        self.local_dense2_1 = Dense(self.fp_len, activation="elu")
+        self.local_dense3_1 = Dense(self.fp_len, activation="elu")
+
+    def call(self, inputs, training=None):
+        out_g1 = self.global_dense1(inputs)
+        out_l1_1 = self.local_dense1_1(inputs)
+        out_l1 = self.local_dense1(out_l1_1)
+
+
+        in_g2 = self.add1([inputs, out_g1])
+        out_g2 = self.global_dense2(in_g2)
+        out_l2_1 = self.local_dense2_1(in_g2)
+        out_l2 = self.local_dense2(out_l2_1)
+
+        in_g3 = self.add2([inputs, out_g2])
+        out_g3 = self.global_dense3(in_g3)
+        out_l3_1 = self.local_dense3_1(in_g3)
+        out_l3 = self.local_dense3(out_l3_1)
+
+        in_g4 = self.add3([inputs, out_g3])
+        out_g4 = self.global_dense4(in_g4)
+
+        in_g5 = self.dropout(out_g4)
+        out_g5 = self.global_dense5(in_g5)
+
+        out_global = math.multiply(self.beta, out_g5)
+        out_local = math.multiply(1-self.beta, out_l3)
+
+        global_local_sum = self.add4([out_global, out_local])
+        
+        final_out = tf.sigmoid(tf.concat(
+            [out_l1, out_l2, out_l3, global_local_sum], axis=1))
+        return final_out
+
+
+class HMLC_L(HMLC_M):
+
+    def __init__(self, *args, **kwargs):
+        super(HMLC_L, self).__init__(*args, **kwargs)
+        self.global_dense5 = Dense(int(self.fp_len/4), activation="elu")
+        self.global_dense6 = Dense(self.l3_len, activation=None)
+        self.local_dense1_2 = Dense(int(self.fp_len/2), activation="elu")
+        self.local_dense2_2 = Dense(int(self.fp_len/2), activation="elu")
+        self.local_dense3_2 = Dense(int(self.fp_len/2), activation="elu")
+
+    def call(self, inputs, training=None):
+        out_g1 = self.global_dense1(inputs)
+        out_l1_1 = self.local_dense1_1(inputs)
+        out_l1_2 = self.local_dense1_2(out_l1_1)
+        out_l1 = self.local_dense1(out_l1_2)
+
+
+        in_g2 = self.add1([inputs, out_g1])
+        out_g2 = self.global_dense2(in_g2)
+        out_l2_1 = self.local_dense2_1(in_g2)
+        out_l2_2 = self.local_dense2_2(out_l2_1)
+        out_l2 = self.local_dense2(out_l2_2)
+
+        in_g3 = self.add2([inputs, out_g2])
+        out_g3 = self.global_dense3(in_g3)
+        out_l3_1 = self.local_dense3_1(in_g3)
+        out_l3_2 = self.local_dense3_2(out_l3_1)
+        out_l3 = self.local_dense3(out_l3_2)
+
+        in_g4 = self.add3([inputs, out_g3])
+        out_g4 = self.global_dense4(in_g4)
+
+        in_g5 = self.dropout(out_g4)
+        out_g5 = self.global_dense5(in_g5)
+
+        in_g6 = self.dropout(out_g5)
+        out_g6 = self.global_dense6(in_g6)
+
+        out_global = math.multiply(self.beta, out_g6)
+        out_local = math.multiply(1-self.beta, out_l3)
+
+        global_local_sum = self.add4([out_global, out_local])
+        
+        final_out = tf.sigmoid(tf.concat(
+            [out_l1, out_l2, out_l3, global_local_sum], axis=1))
+        return final_out

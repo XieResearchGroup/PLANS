@@ -4,7 +4,7 @@ from datetime import datetime
 
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
 from tensorflow.keras.metrics import Precision, Recall, AUC, Accuracy
 import numpy as np
 from sklearn.metrics import accuracy_score
@@ -43,13 +43,14 @@ def train_model(model,
     # Model training
     ## Callbacks
     tbcb = TensorBoard(log_path)
+    escb = EarlyStopping("val_accuracy", patience=5)
     ## fit
     model.fit(
         x=x_train,
         y=y_train,
         batch_size=batch_size,
         epochs=epochs,
-        callbacks=[tbcb],
+        callbacks=[tbcb, escb],
         validation_data=[x_test, y_val]
     )
 

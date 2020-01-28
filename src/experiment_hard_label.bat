@@ -1,1 +1,1 @@
-python -m training.train_hmlc -p ..\data\fromraw_cid_inchi_smiles_fp_labels.csv -e 1 -b 256 -l 0.001 -r
+python -m training.experiment_hard_label -p ..\data\fromraw_cid_inchi_smiles_fp_labels.csv -e 1 -b 256 -l 0.001

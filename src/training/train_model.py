@@ -14,6 +14,7 @@ def train_model(model,
                 drop_rate,
                 batch_size,
                 epochs,
+                es_patience,
                 log_path,
                 log_fh=None):
     """ Train model with provided training and validation data
@@ -36,7 +37,7 @@ def train_model(model,
     # Model training
     ## Callbacks
     tbcb = TensorBoard(log_path)
-    escb = EarlyStopping("val_accuracy", patience=5)
+    escb = EarlyStopping("val_accuracy", patience=es_patience)
     ## fit
     model.fit(
         x=x_train,

@@ -10,6 +10,7 @@ from data_loaders.cvs_loader import CVSLoader
 from utils.label_convertors import convert2vec, hierarchical, convert2hier
 from utils.label_convertors import fill_unlabeled
 from .train_model import train_model
+from .training_args import TrainingArgs
 
 
 def main(data_path,
@@ -19,6 +20,7 @@ def main(data_path,
          drop_rate=0.3,
          batch_size=128,
          epochs=30,
+         es_patience=5,
          log_path="../logs",
          if_hard=False):
     # Data
@@ -51,7 +53,8 @@ def main(data_path,
     ## Training
     train_model(
         model1, x_train, y_train, x_test, y_val, y_eval,
-        learning_rate, drop_rate, batch_size, epochs, log_path, log_f
+        learning_rate, drop_rate, batch_size, epochs, es_patience,
+        log_path, log_f
     )
 
     ## Predict labels for unlabeled data with model1
@@ -67,6 +70,7 @@ def main(data_path,
     np.take(y_mix, randomed_idx, axis=0, out=y_mix)
 
     # Train model2
+    tf.keras.backend.clear_session()
     model2 = HMLC_M(drop_rate=drop_rate)
     ## Training
     train_model(
@@ -87,6 +91,7 @@ def main(data_path,
     np.take(y_mix, randomed_idx, axis=0, out=y_mix)
 
     # Train model3
+    tf.keras.backend.clear_session()
     model3 = HMLC_L(drop_rate=drop_rate)
     ## Training
     train_model(
@@ -96,13 +101,7 @@ def main(data_path,
     log_f.close()
     
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--data-path")
-    parser.add_argument("-b", "--batch-size", type=int)
-    parser.add_argument("-l", "--learning-rate", type=float)
-    parser.add_argument("-e", "--epochs", type=int)
-    parser.add_argument("-r", "--if-hard", action="store_true")
+    parser = TrainingArgs()
     args = parser.parse_args()
     main(**vars(args))

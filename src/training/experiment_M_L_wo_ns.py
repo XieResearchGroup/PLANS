@@ -12,6 +12,7 @@ from models.hmlc import HMLC_M, HMLC_L
 from data_loaders.cvs_loader import CVSLoader
 from utils.label_convertors import convert2vec, hierarchical, convert2hier
 from .train_model import train_model
+from .training_args import TrainingArgs
 
 
 def experiment(data_path,
@@ -21,6 +22,7 @@ def experiment(data_path,
                drop_rate=0.3,
                batch_size=128,
                epochs=30,
+               es_patience=5,
                log_path="../logs"):
     # Data
     data_loader = DataLoader(data_path)
@@ -52,11 +54,13 @@ def experiment(data_path,
     ## Training
     train_model(
         model1, x_train, y_train, x_test, y_val, y_eval,
-        learning_rate, drop_rate, batch_size, epochs, log_path, log_f
+        learning_rate, drop_rate, batch_size, epochs, es_patience,
+        log_path, log_f
     )
 
     # Train model2
     ## Initialize model2
+    tf.keras.backend.clear_session()
     model2 = HMLC_L(drop_rate=drop_rate)
     ## Training
     train_model(
@@ -66,10 +70,6 @@ def experiment(data_path,
     
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--data-path")
-    parser.add_argument("-b", "--batch-size", type=int)
-    parser.add_argument("-l", "--learning-rate", type=float)
-    parser.add_argument("-e", "--epochs", type=int)
+    parser = TrainingArgs()
     args = parser.parse_args()
-    experiment(**vars(args))
+    main(**vars(args))

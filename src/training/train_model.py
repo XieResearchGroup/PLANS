@@ -37,7 +37,7 @@ def train_model(model,
     # Model training
     ## Callbacks
     tbcb = TensorBoard(log_path)
-    escb = EarlyStopping("val_accuracy", patience=es_patience)
+    escb = EarlyStopping("val_loss", patience=es_patience)
     ## fit
     model.fit(
         x=x_train,

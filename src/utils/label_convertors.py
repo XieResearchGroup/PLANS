@@ -31,3 +31,26 @@ def convert2hier(label, dtype):
     label = convert2vec(label, dtype=int)
     label = hierarchical(label)
     return label.astype(dtype)
+
+
+def fill_unlabeled(predictions, data_unlabeled, hard_label=False):
+    """ Fill the unlabeled blanks in data_unlabeled with predicted labels
+    predictions (numpy.array): predicted labels, shape is (?, 5)
+    data_unlabeled (numpy.array): str, unlabeled data in "1_10_"-like format
+    hard_label (bool): use hard label to label the unlabeled data
+    ========================================================================
+    return: numpy.array
+    """
+    data_labeled = np.zeros(predictions.shape)
+    for i, data in enumerate(data_unlabeled):
+        labeled = list(data)
+        for j, label in enumerate(labeled):
+            try:
+                labeled[j] = int(label)
+            except ValueError:
+                if hard_label:
+                    labeled[j] = round(predictions[i, j])
+                else:
+                    labeled[j] = predictions[i, j]
+        data_labeled[i] = labeled
+    return data_labeled

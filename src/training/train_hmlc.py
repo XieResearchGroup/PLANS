@@ -11,10 +11,11 @@ from utils.label_convertors import convert2vec, hierarchical, convert2hier
 from .train_model import train_model
 
 
-def fill_unlabeled(predictions, data_unlabeled):
+def fill_unlabeled(predictions, data_unlabeled, hard_label=False):
     """ Fill the unlabeled blanks in data_unlabeled with predicted labels
     predictions (numpy.array): predicted labels, shape is (?, 5)
     data_unlabeled (numpy.array): str, unlabeled data in "1_10_"-like format
+    hard_label (bool): use hard label to label the unlabeled data
     ========================================================================
     return: numpy.array
     """
@@ -37,7 +38,8 @@ def main(data_path,
          drop_rate=0.3,
          batch_size=128,
          epochs=30,
-         log_path="../logs"):
+         log_path="../logs",
+         if_hard=False):
     # Data
     data_loader = DataLoader(data_path)
     x_train, y_train, x_test, y_test = data_loader.load_data(columns)
@@ -73,7 +75,7 @@ def main(data_path,
 
     ## Predict labels for unlabeled data with model1
     predictions = model1.predict(x_pred)[:, -5:]
-    y_pred = fill_unlabeled(predictions, data_pred[:, 1])
+    y_pred = fill_unlabeled(predictions, data_pred[:, 1], hard_label=if_hard)
     y_pred = convert2hier(np.round(y_pred), dtype=float)
 
     ## Combine labeled and unlabeled training data
@@ -93,7 +95,7 @@ def main(data_path,
 
     ## Predict labels for unlabeled data with model2
     predictions = model2.predict(x_pred)[:, -5:]
-    y_pred = fill_unlabeled(predictions, data_pred[:, 1])
+    y_pred = fill_unlabeled(predictions, data_pred[:, 1], hard_label=if_hard)
     y_pred = convert2hier(np.round(y_pred), dtype=float)
 
     ## Combine labeled and unlabeled training data
@@ -120,5 +122,6 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--batch-size", type=int)
     parser.add_argument("-l", "--learning-rate", type=float)
     parser.add_argument("-e", "--epochs", type=int)
+    parser.add_argument("-r", "--if-hard", action="store_true")
     args = parser.parse_args()
     main(**vars(args))

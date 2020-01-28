@@ -17,13 +17,14 @@ def _if_true_label(label):
 
 
 def hierarchical(true_label):
-    l1 = _if_true_label(true_label)
-    l2_1 = _if_true_label(true_label[:, 0:2])
+    rounded = np.round(true_label)
+    l1 = _if_true_label(rounded)
+    l2_1 = _if_true_label(rounded[:, 0:2])
     l2_2 = _if_true_label(
-        true_label[:, 2:4])
-    l2_3 = _if_true_label(true_label[:, 4])
+        rounded[:, 2:4])
+    l2_3 = _if_true_label(rounded[:, 4])
     return np.concatenate(
-        [l1, l2_1, l2_2, l2_3, true_label, true_label], axis=1)
+        [l1, l2_1, l2_2, l2_3, rounded, true_label], axis=1)
 
 
 def convert2hier(label, dtype):

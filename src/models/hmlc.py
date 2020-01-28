@@ -69,10 +69,9 @@ class HMLC(Model):
         cl = self.crossentropy_loss(y_true, y_pred)
         hv = self.hierarchical_violation(
             y_true, y_pred, hier_vio_coef)
-        # return tf.add(cl, hv)
-        return cl
+        return tf.add(cl, hv)
 
-    def crossentropy_loss(self, y_true, y_pred):
+    def crossentropy_loss(self, y_true, y_pred, weights=None):
         global_loss = tf.reduce_mean(
             tf.keras.losses.binary_crossentropy(
                 y_true[:, -self.l3_len:],

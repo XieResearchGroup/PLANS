@@ -71,8 +71,8 @@ class HMLC(Model):
             cl = self.crossentropy_loss(y_true, y_pred, unlabeled_weight)
             hv = self.hierarchical_violation(
                 y_true, y_pred, hier_vio_coef)
-            return tf.add(cl, hv)
-            # return cl
+            # return tf.add(cl, hv)
+            return cl
         
         return loss
 
@@ -82,15 +82,15 @@ class HMLC(Model):
                                      unlabeled_weight,
                                      epsilon=1e-12):
         weights = tf.ones_like(y_true, dtype=tf.float32)
-        unlabeled = tf.logical_and(y_true > 0, y_true < 1)
+        unlabeled = tf.logical_and(tf.greater(y_true, 0), tf.less(y_true, 1))
         weights = tf.where(unlabeled, float(unlabeled_weight), weights)
-        y_pred = tf.clip_by_value(y_pred, epsilon, 1.-epsilon)
+        # y_pred = tf.clip_by_value(y_pred, epsilon, 1.-epsilon)
         ce = tf.negative(
             tf.add(
-                tf.multiply(y_true, tfm.log(y_pred)),
+                tf.multiply(y_true, tfm.log(y_pred+epsilon)),
                 tf.multiply(
                     tf.subtract(1.0, y_true),
-                    tfm.log(tf.subtract(1.0, y_pred)))))
+                    tfm.log(tf.subtract(1.0, y_pred)+epsilon))))
         weighted_ce = tf.multiply(weights, ce)
         crossentropy = tf.reduce_mean(weighted_ce)
         return crossentropy

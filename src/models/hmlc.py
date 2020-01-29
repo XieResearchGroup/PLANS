@@ -121,7 +121,11 @@ class HMLC(Model):
         local_loss = tf.add(local_loss_1, local_loss_2)
         return tf.add(global_loss, local_loss)
     
-    def hierarchical_violation(self, y_true, y_pred, hier_vio_coef):
+    def hierarchical_violation(self,
+                               y_true,
+                               y_pred,
+                               hier_vio_coef,
+                               epsilon=1e-12):
         l1 = y_pred[:, 0:self.l1_len]
         l2 = y_pred[:, self.l1_len:self.l1_len+self.l2_len]
         l3 = y_pred[:, self.l1_len+self.l2_len:]
@@ -138,6 +142,7 @@ class HMLC(Model):
                 0.0, tf.subtract(l3[:, 4], tf.expand_dims(l2[:, 2], 1))))
         hier_viol = tf.multiply(
             hier_vio_coef, (l1_l2 + l2_l3_1 + l2_l3_2 + l2_l3_3))
+        hier_viol = tf.clip_by_value(hier_viol, epsilon, 5.)
         return hier_viol
 
 

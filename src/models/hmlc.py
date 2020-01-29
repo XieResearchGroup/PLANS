@@ -1,7 +1,7 @@
 import os
 
 import tensorflow as tf
-from tensorflow import math
+from tensorflow import math as tfm
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Dense, Add, Dropout
 from tensorflow.keras.layers import BatchNormalization
@@ -56,8 +56,8 @@ class HMLC(Model):
         in_g4 = self.dropout(in_g4)
 
         out_g4 = self.global_dense4(in_g4)
-        out_global = math.multiply(self.beta, out_g4)
-        out_local = math.multiply(1-self.beta, out_l3)
+        out_global = tfm.multiply(self.beta, out_g4)
+        out_local = tfm.multiply(1-self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
         
@@ -65,66 +65,75 @@ class HMLC(Model):
             [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out
 
-    def training_loss(self, weights=None, hier_vio_coef=0.1):
+    def training_loss(self, unlabeled_weight, hier_vio_coef=0.1):
 
         def loss(y_true, y_pred):
-            cl = self.crossentropy_loss(y_true, y_pred, weights)
+            cl = self.crossentropy_loss(y_true, y_pred, unlabeled_weight)
             hv = self.hierarchical_violation(
                 y_true, y_pred, hier_vio_coef)
             return tf.add(cl, hv)
+            # return cl
         
         return loss
 
     @staticmethod
-    def weighted_binary_crossentropy(y_true, y_pred, weights):
-        y_true = tf.math.round(y_true)
-        ce = y_true * tf.math.log(y_pred) + (1-y_true) * tf.math.log(1-y_pred)
-        weighted_ce = weights * ce
+    def weighted_binary_crossentropy(y_true,
+                                     y_pred,
+                                     unlabeled_weight,
+                                     epsilon=1e-12):
+        weights = tf.ones_like(y_true, dtype=tf.float32)
+        unlabeled = tf.logical_and(y_true > 0, y_true < 1)
+        weights = tf.where(unlabeled, float(unlabeled_weight), weights)
+        y_pred = tf.clip_by_value(y_pred, epsilon, 1.-epsilon)
+        ce = tf.negative(
+            tf.add(
+                tf.multiply(y_true, tfm.log(y_pred)),
+                tf.multiply(
+                    tf.subtract(1.0, y_true),
+                    tfm.log(tf.subtract(1.0, y_pred)))))
+        weighted_ce = tf.multiply(weights, ce)
         crossentropy = tf.reduce_mean(weighted_ce)
         return crossentropy
 
-    def crossentropy_loss(self, y_true, y_pred, weights=None):
+    def crossentropy_loss(self, y_true, y_pred, unlabeled_weight):
         y_true_global = y_true[:, -self.l3_len:]
         y_pred_global = y_pred[:, -self.l3_len:]
         y_true_l1 = y_true[:, 0:self.l1_len]
         y_pred_l1 = y_pred[:, 0:self.l1_len]
         y_true_l2 = y_true[:, self.l1_len:self.l1_len+self.l2_len]
         y_pred_l2 = y_pred[:, self.l1_len:self.l1_len+self.l2_len]
-        
-        if weights is None:
-            global_loss = tf.reduce_mean(
-                tf.keras.losses.binary_crossentropy(
-                    y_true_global, y_pred_global))
-            local_loss_1 = tf.reduce_mean(
-            tf.keras.losses.binary_crossentropy(y_true_l1, y_pred_l1))
-            local_loss_2 = tf.reduce_mean(
-                tf.keras.losses.binary_crossentropy(y_true_l2, y_pred_l2))
-        else:
-            global_loss = weighted_binary_crossentropy(
-                y_true_global, y_pred_global, weights)
-            local_loss_1 = weighted_binary_crossentropy(
-                y_true_l1, y_pred_l1, weights[:, 0:self.l1_len])
-            local_loss_2 = weighted_binary_crossentropy(
-                y_true_l2, y_pred_l2,
-                weights[:, self.l1_len:self.l1_len+self.l2_len]
-            )
+
+        # global_loss = tf.reduce_mean(
+        #     tf.keras.losses.binary_crossentropy(
+        #         y_true_global, y_pred_global))
+        # local_loss_1 = tf.reduce_mean(
+        # tf.keras.losses.binary_crossentropy(y_true_l1, y_pred_l1))
+        # local_loss_2 = tf.reduce_mean(
+        #     tf.keras.losses.binary_crossentropy(y_true_l2, y_pred_l2))
+
+        global_loss = self.weighted_binary_crossentropy(
+            y_true_global, y_pred_global, unlabeled_weight)
+        local_loss_1 = self.weighted_binary_crossentropy(
+            y_true_l1, y_pred_l1, unlabeled_weight)
+        local_loss_2 = self.weighted_binary_crossentropy(
+            y_true_l2, y_pred_l2, unlabeled_weight)
         
         local_loss = tf.add(local_loss_1, local_loss_2)
         return tf.add(global_loss, local_loss)
     
     def hierarchical_violation(self, y_true, y_pred, hier_vio_coef):
-        l1 = tf.nn.sigmoid(y_pred[:, 0:self.l1_len])
-        l2 = tf.nn.sigmoid(y_pred[:, self.l1_len:self.l1_len+self.l2_len])
-        l3 = tf.nn.sigmoid(y_pred[:, self.l1_len+self.l2_len:])
+        l1 = y_pred[:, 0:self.l1_len]
+        l2 = y_pred[:, self.l1_len:self.l1_len+self.l2_len]
+        l3 = y_pred[:, self.l1_len+self.l2_len:]
 
-        l1_l2 = tf.reduce_sum(tf.maximum(0.0, tf.subtract(l2, l1)))
-        l2_l3_1 = tf.reduce_sum(
+        l1_l2 = tf.reduce_mean(tf.maximum(0.0, tf.subtract(l2, l1)))
+        l2_l3_1 = tf.reduce_mean(
             tf.maximum(
                 0.0, tf.subtract(l3[:, 0:2], tf.expand_dims(l2[:, 0], 1))))
-        l2_l3_2 = tf.reduce_sum(
+        l2_l3_2 = tf.reduce_mean(
             tf.maximum(
                 0.0, tf.subtract(l3[:, 2:4], tf.expand_dims(l2[:, 1], 1))))
-        l2_l3_3 = tf.reduce_sum(
+        l2_l3_3 = tf.reduce_mean(
             tf.maximum(
                 0.0, tf.subtract(l3[:, 4], tf.expand_dims(l2[:, 2], 1))))
         hier_viol = tf.multiply(
@@ -164,8 +173,8 @@ class HMLC_M(HMLC):
         in_g5 = self.dropout(out_g4)
         out_g5 = self.global_dense5(in_g5)
 
-        out_global = math.multiply(self.beta, out_g5)
-        out_local = math.multiply(1-self.beta, out_l3)
+        out_global = tfm.multiply(self.beta, out_g5)
+        out_local = tfm.multiply(1-self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
         
@@ -212,8 +221,8 @@ class HMLC_L(HMLC_M):
         in_g6 = self.dropout(out_g5)
         out_g6 = self.global_dense6(in_g6)
 
-        out_global = math.multiply(self.beta, out_g6)
-        out_local = math.multiply(1-self.beta, out_l3)
+        out_global = tfm.multiply(self.beta, out_g6)
+        out_local = tfm.multiply(1-self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
         

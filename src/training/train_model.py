@@ -16,10 +16,13 @@ def train_model(model,
                 epochs,
                 es_patience,
                 log_path,
-                log_fh=None):
+                log_fh,
+                comment=None):
     """ Train model with provided training and validation data
     """
-    
+    ## Write comment to the log file
+    if comment:
+        log_fh.write(comment+"\n")
     ## Optimizer
     adam = Adam(learning_rate)
     ## Metrics
@@ -60,5 +63,4 @@ def train_model(model,
 
     # Show and save training results
     print("acc_score is: {}".format(acc_score))
-    if log_fh is not None:
-        print("acc_score is: {}".format(acc_score), file=log_fh)
+    log_fh.write("acc_score is: {}\n".format(acc_score))

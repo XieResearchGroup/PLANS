@@ -7,6 +7,7 @@ from sklearn.metrics import accuracy_score
 def train_model(model, 
                 x_train,
                 y_train,
+                unlabeled_weight,
                 x_test,
                 y_val,
                 y_eval,
@@ -17,6 +18,7 @@ def train_model(model,
                 es_patience,
                 log_path,
                 log_fh,
+                hier_vio_coef=0.1,
                 comment=None):
     """ Train model with provided training and validation data
     """
@@ -33,7 +35,7 @@ def train_model(model,
     ## Compile model
     model.compile(
         optimizer=adam,
-        loss=model.training_loss,
+        loss=model.training_loss(unlabeled_weight, hier_vio_coef),
         metrics=[accuracy, precision, recall, auc]
     )
 

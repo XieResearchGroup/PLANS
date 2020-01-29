@@ -1,6 +1,6 @@
 import numpy as np
 
-def generate_weight(label, nl_symbol, n_fold):
+def _generate_weight(label, nl_symbol, n_fold):
     """ Generate weights based on one multi-label label.
     label (str): multi-label or multi-class label
     nl_symbol (str): the symbol representing no label
@@ -25,7 +25,7 @@ def generate_partially_unlabeled_weights(labels, nl_symbol="_", n_fold=0.5):
     """
     weights = np.zeros((len(labels), len(labels[0])))
     for i, label in enumerate(labels):
-        weight = generate_weights(label, nl_symbol, n_fold)
+        weight = _generate_weight(label, nl_symbol, n_fold)
         weights[i] = weight
     return weights
 

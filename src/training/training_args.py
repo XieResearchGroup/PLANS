@@ -11,3 +11,5 @@ class TrainingArgs(argparse.ArgumentParser):
         self.add_argument("-r", "--if-hard", action="store_true")
         self.add_argument("--es-patience", type=int, default=3,
                           help="early_stop callback patience.")
+        self.add_argument("--log-path", type=str, default="../logs", 
+                          help="path to the log directory")

@@ -1,6 +1,7 @@
 import os
 import argparse
 from datetime import datetime
+from functools import partial
 
 import tensorflow as tf
 import numpy as np
@@ -22,6 +23,7 @@ def main(data_path,
          epochs=30,
          es_patience=5,
          log_path="../logs",
+         comment=None,
          if_hard=False):
     # Data
     data_loader = DataLoader(data_path)
@@ -47,15 +49,24 @@ def main(data_path,
     log_f_path = os.path.join(log_path, "logs.txt")
     log_f = open(log_f_path, "w")
 
+    # Set up the train_model function
+    my_train_model = partial(
+        train_model,
+        learning_rate=learning_rate,
+        drop_rate=drop_rate,
+        batch_size=batch_size,
+        epochs=epochs,
+        es_patience=es_patience,
+        log_path=log_path,
+        log_fh=log_f,
+        comment=comment
+    )
+    
     # Train model1
     ## Initialize model1
     model1 = HMLC(drop_rate=drop_rate)
     ## Training
-    train_model(
-        model1, x_train, y_train, x_test, y_val, y_eval,
-        learning_rate, drop_rate, batch_size, epochs, es_patience,
-        log_path, log_f
-    )
+    my_train_model(model1, x_train, y_train, x_test, y_val, y_eval)
 
     ## Predict labels for unlabeled data with model1
     predictions = model1.predict(x_pred)[:, -5:]
@@ -77,11 +88,7 @@ def main(data_path,
     tf.keras.backend.clear_session()
     model2 = HMLC_M(drop_rate=drop_rate)
     ## Training
-    train_model(
-        model2, x_mix, y_mix, x_test, y_val, y_eval,
-        learning_rate, drop_rate, batch_size, epochs, es_patience,
-        log_path, log_f
-    )
+    my_train_model(model2, x_mix, y_mix, x_test, y_val, y_eval)
 
     ## Combine labeled and hard-labeled unlabeled training data
     x_mix = np.concatenate([x_train, x_pred], axis=0)
@@ -94,11 +101,7 @@ def main(data_path,
     tf.keras.backend.clear_session()
     model3 = HMLC_M(drop_rate=drop_rate)
     ## Training
-    train_model(
-        model3, x_mix, y_mix, x_test, y_val, y_eval,
-        learning_rate, drop_rate, batch_size, epochs, es_patience,
-        log_path, log_f
-    )
+    my_train_model(model3, x_mix, y_mix, x_test, y_val, y_eval)
     log_f.close()
     
 

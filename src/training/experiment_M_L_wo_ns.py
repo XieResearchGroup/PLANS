@@ -4,6 +4,7 @@ labeled unlabeled data.
 import os
 import argparse
 from datetime import datetime
+from functools import partial
 
 import tensorflow as tf
 import numpy as np
@@ -23,7 +24,8 @@ def experiment(data_path,
                batch_size=128,
                epochs=30,
                es_patience=5,
-               log_path="../logs"):
+               log_path="../logs",
+               comment=None):
     # Data
     data_loader = DataLoader(data_path)
     x_train, y_train, x_test, y_test = data_loader.load_data(columns)
@@ -39,6 +41,19 @@ def experiment(data_path,
     x_pred = data_pred[:, 0]
     x_pred = convert2vec(x_pred, dtype=float)
 
+    # Set up the train_model function
+    my_train_model = partial(
+        train_model,
+        learning_rate=learning_rate,
+        drop_rate=drop_rate,
+        batch_size=batch_size,
+        epochs=epochs,
+        es_patience=es_patience,
+        log_path=log_path,
+        log_fh=log_f,
+        comment=comment
+    )
+
     # Open log
     now = datetime.now()
     timestamp = now.strftime(r"%Y%m%d_%H%M%S")
@@ -52,21 +67,14 @@ def experiment(data_path,
     ## Initialize model1
     model1 = HMLC_M(drop_rate=drop_rate)
     ## Training
-    train_model(
-        model1, x_train, y_train, x_test, y_val, y_eval,
-        learning_rate, drop_rate, batch_size, epochs, es_patience,
-        log_path, log_f
-    )
+    my_train_model(model1, x_train, y_train, x_test, y_val, y_eval)
 
     # Train model2
     ## Initialize model2
     tf.keras.backend.clear_session()
     model2 = HMLC_L(drop_rate=drop_rate)
     ## Training
-    train_model(
-        model2, x_train, y_train, x_test, y_val, y_eval,
-        learning_rate, drop_rate, batch_size, epochs, log_path, log_f
-    )
+    my_train_model(model2, x_train, y_train, x_test, y_val, y_eval)
     
 
 if __name__ == "__main__":

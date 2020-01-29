@@ -15,3 +15,5 @@ class TrainingArgs(argparse.ArgumentParser):
                           help="path to the log directory")
         self.add_argument("-m", "--comment", type=str, default=None,
                           help="comment for the training")
+        self.add_argument("--unlabeled-weight", type=float, default=0.5,
+                          help="weight of unlabeled data in loss function")               

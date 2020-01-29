@@ -41,7 +41,7 @@ def fill_unlabeled(predictions, data_unlabeled, hard_label=False):
     ========================================================================
     return: numpy.array
     """
-    data_labeled = np.zeros(predictions.shape)
+    data_labeled = np.zeros((len(data_unlabeled), len(data_unlabeled[0])))
     for i, data in enumerate(data_unlabeled):
         labeled = list(data)
         for j, label in enumerate(labeled):
@@ -49,8 +49,14 @@ def fill_unlabeled(predictions, data_unlabeled, hard_label=False):
                 labeled[j] = int(label)
             except ValueError:
                 if hard_label:
-                    labeled[j] = round(predictions[i, j])
+                    if isinstance(predictions, (int, float)):
+                        labeled[j] = round(predictions)
+                    else:
+                        labeled[j] = round(predictions[i, j])
                 else:
-                    labeled[j] = predictions[i, j]
+                    if isinstance(predictions, (int, float)):
+                        labeled[j] = predictions
+                    else:
+                        labeled[j] = predictions[i, j]
         data_labeled[i] = labeled
     return data_labeled

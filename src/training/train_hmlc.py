@@ -1,15 +1,13 @@
+###############################################################
+# Train HMLC, HMLC_M, HMLC_L models with Noisy Student method #
+###############################################################
+
 import os
 from datetime import datetime
-from functools import partial
 
-import tensorflow as tf
-import numpy as np
-
-from models.hmlc import HMLC, HMLC_M, HMLC_L
 from data_loaders.cvs_loader import CVSLoader
-from utils.label_convertors import convert2vec, hierarchical, convert2hier
-from utils.label_convertors import fill_unlabeled
-from .train_model import train_model
+from utils.label_convertors import convert2vec, convert2hier
+from .train_model import noisy_student
 from .training_args import TrainingArgs
 
 
@@ -49,10 +47,14 @@ def main(data_path,
     log_f_path = os.path.join(log_path, "logs.txt")
     log_f = open(log_f_path, "w")
 
-    # Set up the train_model function
-    my_train_model = partial(
-        train_model,
-        unlabeled_weight=unlabeled_weight,
+    noisy_student(
+        x_train=x_train,
+        y_train=y_train,
+        unlabeled_weight=1,
+        x_test=x_test,
+        y_val=y_val,
+        y_eval=y_eval,
+        data_pred=data_pred,
         learning_rate=learning_rate,
         drop_rate=drop_rate,
         batch_size=batch_size,
@@ -61,66 +63,6 @@ def main(data_path,
         log_path=log_path,
         log_fh=log_f,
         comment=comment)
-
-    # Train model1
-    # - Initialize model1
-    model1 = HMLC(drop_rate=drop_rate)
-    # - Training
-    my_train_model(
-        model=model1,
-        x_train=x_train,
-        y_train=y_train,
-        x_test=x_test,
-        y_val=y_val,
-        y_eval=y_eval)
-
-    # - Predict labels for unlabeled data with model1
-    predictions = model1.predict(x_pred)[:, -5:]
-    y_pred = fill_unlabeled(predictions, data_pred[:, 1], hard_label=if_hard)
-    y_pred = hierarchical(y_pred)
-
-    # - Combine labeled and unlabeled training data
-    x_mix = np.concatenate([x_train, x_pred], axis=0)
-    y_mix = np.concatenate([y_train, y_pred], axis=0)
-    randomed_idx = np.random.permutation(x_mix.shape[0])
-    np.take(x_mix, randomed_idx, axis=0, out=x_mix)
-    np.take(y_mix, randomed_idx, axis=0, out=y_mix)
-
-    # Train model2
-    tf.keras.backend.clear_session()
-    model2 = HMLC_M(drop_rate=drop_rate)
-    # - Training
-    my_train_model(
-        model=model2,
-        x_train=x_mix,
-        y_train=y_mix,
-        x_test=x_test,
-        y_val=y_val,
-        y_eval=y_eval)
-
-    # - Predict labels for unlabeled data with model2
-    predictions = model2.predict(x_pred)[:, -5:]
-    y_pred = fill_unlabeled(predictions, data_pred[:, 1], hard_label=if_hard)
-    y_pred = hierarchical(y_pred)
-
-    # - Combine labeled and unlabeled training data
-    x_mix = np.concatenate([x_train, x_pred], axis=0)
-    y_mix = np.concatenate([y_train, y_pred], axis=0)
-    randomed_idx = np.random.permutation(x_mix.shape[0])
-    np.take(x_mix, randomed_idx, axis=0, out=x_mix)
-    np.take(y_mix, randomed_idx, axis=0, out=y_mix)
-
-    # Train model3
-    tf.keras.backend.clear_session()
-    model3 = HMLC_L(drop_rate=drop_rate)
-    # - Training
-    my_train_model(
-        model=model3,
-        x_train=x_mix,
-        y_train=y_mix,
-        x_test=x_test,
-        y_val=y_val,
-        y_eval=y_eval)
 
     log_f.close()
 

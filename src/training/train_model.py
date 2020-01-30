@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 from utils.label_convertors import convert2vec, hierarchical, fill_unlabeled
-from models import HMLC, HMLC_M, HMLC_L
+from models.hmlc import HMLC, HMLC_M, HMLC_L
 
 
 def train_model(model,

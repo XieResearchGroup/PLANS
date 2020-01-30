@@ -5,10 +5,10 @@ from functools import partial
 import tensorflow as tf
 import numpy as np
 
-from models.hmlc import HMLC, HMLC_M
-from data_loaders.cvs_loader import CVSLoader
-from utils.label_convertors import convert2vec, hierarchical, convert2hier
-from utils.label_convertors import fill_unlabeled
+from ..models.hmlc import HMLC, HMLC_M
+from ..data_loaders.cvs_loader import CVSLoader
+from ..utils.label_convertors import convert2vec, hierarchical, convert2hier
+from ..utils.label_convertors import fill_unlabeled
 from .train_model import train_model
 from .training_args import TrainingArgs
 
@@ -52,7 +52,7 @@ def main(data_path,
     my_train_model = partial(
         train_model,
         learning_rate=learning_rate,
-        drop_rate=drop_rate,
+        unlabeled_weight=1.0,
         batch_size=batch_size,
         epochs=epochs,
         es_patience=es_patience,

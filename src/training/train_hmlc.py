@@ -1,5 +1,4 @@
 import os
-import argparse
 from datetime import datetime
 from functools import partial
 
@@ -10,7 +9,6 @@ from models.hmlc import HMLC, HMLC_M, HMLC_L
 from data_loaders.cvs_loader import CVSLoader
 from utils.label_convertors import convert2vec, hierarchical, convert2hier
 from utils.label_convertors import fill_unlabeled
-from utils.weights import generate_partially_unlabeled_weights
 from .train_model import train_model
 from .training_args import TrainingArgs
 
@@ -33,11 +31,11 @@ def main(data_path,
 
     x_train = convert2vec(x_train, dtype=float)
     y_train = convert2hier(y_train, dtype=float)
-    
+
     x_test = convert2vec(x_test, dtype=float)
-    y_val = convert2hier(y_test, dtype=float) # for validation during training
-    y_eval = convert2vec(y_test, dtype=int)   # for evaluation after training
-    
+    y_val = convert2hier(y_test, dtype=float)  # for validation during training
+    y_eval = convert2vec(y_test, dtype=int)    # for evaluation after training
+
     data_pred = data_loader.load_unlabeled(["ECFP", "Label"])
     x_pred = data_pred[:, 0]
     x_pred = convert2vec(x_pred, dtype=float)
@@ -65,23 +63,23 @@ def main(data_path,
         comment=comment)
 
     # Train model1
-    ## Initialize model1
+    # - Initialize model1
     model1 = HMLC(drop_rate=drop_rate)
-    ## Training
+    # - Training
     my_train_model(
-        model=model1, 
+        model=model1,
         x_train=x_train,
         y_train=y_train,
         x_test=x_test,
         y_val=y_val,
         y_eval=y_eval)
 
-    ## Predict labels for unlabeled data with model1
+    # - Predict labels for unlabeled data with model1
     predictions = model1.predict(x_pred)[:, -5:]
     y_pred = fill_unlabeled(predictions, data_pred[:, 1], hard_label=if_hard)
     y_pred = hierarchical(y_pred)
 
-    ## Combine labeled and unlabeled training data
+    # - Combine labeled and unlabeled training data
     x_mix = np.concatenate([x_train, x_pred], axis=0)
     y_mix = np.concatenate([y_train, y_pred], axis=0)
     randomed_idx = np.random.permutation(x_mix.shape[0])
@@ -91,31 +89,31 @@ def main(data_path,
     # Train model2
     tf.keras.backend.clear_session()
     model2 = HMLC_M(drop_rate=drop_rate)
-    ## Training
+    # - Training
     my_train_model(
-        model = model2,
+        model=model2,
         x_train=x_mix,
         y_train=y_mix,
         x_test=x_test,
         y_val=y_val,
         y_eval=y_eval)
 
-    ## Predict labels for unlabeled data with model2
+    # - Predict labels for unlabeled data with model2
     predictions = model2.predict(x_pred)[:, -5:]
     y_pred = fill_unlabeled(predictions, data_pred[:, 1], hard_label=if_hard)
     y_pred = hierarchical(y_pred)
 
-    ## Combine labeled and unlabeled training data
+    # - Combine labeled and unlabeled training data
     x_mix = np.concatenate([x_train, x_pred], axis=0)
     y_mix = np.concatenate([y_train, y_pred], axis=0)
     randomed_idx = np.random.permutation(x_mix.shape[0])
     np.take(x_mix, randomed_idx, axis=0, out=x_mix)
     np.take(y_mix, randomed_idx, axis=0, out=y_mix)
-    
+
     # Train model3
     tf.keras.backend.clear_session()
     model3 = HMLC_L(drop_rate=drop_rate)
-    ## Training
+    # - Training
     my_train_model(
         model=model3,
         x_train=x_mix,
@@ -125,7 +123,7 @@ def main(data_path,
         y_eval=y_eval)
 
     log_f.close()
-    
+
 
 if __name__ == "__main__":
     parser = TrainingArgs()

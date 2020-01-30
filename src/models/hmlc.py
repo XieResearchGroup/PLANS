@@ -1,13 +1,7 @@
-import os
-
 import tensorflow as tf
 from tensorflow import math as tfm
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Dense, Add, Dropout
-from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.metrics import AUC, Precision, Recall
-from tensorflow.keras.callbacks import TensorBoard
-from tensorflow.keras.optimizers import Adam
 
 
 class HMLC(Model):
@@ -60,7 +54,7 @@ class HMLC(Model):
         out_local = tfm.multiply(1-self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
-        
+
         final_out = tf.sigmoid(tf.concat(
             [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out
@@ -71,9 +65,9 @@ class HMLC(Model):
             cl = self.crossentropy_loss(y_true, y_pred, unlabeled_weight)
             hv = self.hierarchical_violation(
                 y_true, y_pred, hier_vio_coef)
-            # return tf.add(cl, hv)
-            return cl
-        
+            return tf.add(cl, hv)
+            # return cl
+
         return loss
 
     @staticmethod
@@ -117,10 +111,10 @@ class HMLC(Model):
             y_true_l1, y_pred_l1, unlabeled_weight)
         local_loss_2 = self.weighted_binary_crossentropy(
             y_true_l2, y_pred_l2, unlabeled_weight)
-        
+
         local_loss = tf.add(local_loss_1, local_loss_2)
         return tf.add(global_loss, local_loss)
-    
+
     def hierarchical_violation(self,
                                y_true,
                                y_pred,
@@ -161,7 +155,6 @@ class HMLC_M(HMLC):
         out_l1_1 = self.local_dense1_1(inputs)
         out_l1 = self.local_dense1(out_l1_1)
 
-
         in_g2 = self.add1([inputs, out_g1])
         out_g2 = self.global_dense2(in_g2)
         out_l2_1 = self.local_dense2_1(in_g2)
@@ -182,7 +175,7 @@ class HMLC_M(HMLC):
         out_local = tfm.multiply(1-self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
-        
+
         final_out = tf.sigmoid(tf.concat(
             [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out
@@ -203,7 +196,6 @@ class HMLC_L(HMLC_M):
         out_l1_1 = self.local_dense1_1(inputs)
         out_l1_2 = self.local_dense1_2(out_l1_1)
         out_l1 = self.local_dense1(out_l1_2)
-
 
         in_g2 = self.add1([inputs, out_g1])
         out_g2 = self.global_dense2(in_g2)
@@ -230,7 +222,7 @@ class HMLC_L(HMLC_M):
         out_local = tfm.multiply(1-self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
-        
+
         final_out = tf.sigmoid(tf.concat(
             [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out

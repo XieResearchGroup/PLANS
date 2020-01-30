@@ -49,9 +49,10 @@ def train_model(model,
     # - Callbacks
     tbcb = TensorBoard(log_path)
     escb = EarlyStopping(
-        "val_loss",
+        "val_accuracy",
         patience=es_patience,
-        restore_best_weights=True
+        restore_best_weights=True,
+        mode="max"
     )
     # - fit
     model.fit(

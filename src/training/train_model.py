@@ -49,10 +49,10 @@ def train_model(model,
     # - Callbacks
     tbcb = TensorBoard(log_path)
     escb = EarlyStopping(
-        "val_precision",
+        "val_loss",
         patience=es_patience,
         restore_best_weights=True,
-        mode="max"
+        mode="min"
     )
     # - fit
     model.fit(
@@ -73,6 +73,8 @@ def train_model(model,
     # Show and save training results
     print("acc_score is: {}".format(acc_score))
     log_fh.write("acc_score is: {}\n".format(acc_score))
+
+    return model
 
 
 def noisy_student(x_train,
@@ -107,7 +109,7 @@ def noisy_student(x_train,
     tf.keras.backend.clear_session()
     model1 = HMLC(drop_rate=drop_rate)
     # - train model1
-    noisy_train_model(
+    model1 = noisy_train_model(
         model=model1,
         x_train=x_train,
         y_train=y_train,
@@ -130,9 +132,10 @@ def noisy_student(x_train,
 
     # - Train model2
     tf.keras.backend.clear_session()
+    log_fh.write("Noisy Student model 2:\n")
     model2 = HMLC_M(drop_rate=drop_rate)
     # - Training
-    noisy_train_model(
+    model2 = noisy_train_model(
         model=model2,
         x_train=x_mix,
         y_train=y_mix,
@@ -154,9 +157,10 @@ def noisy_student(x_train,
 
     # - Train model3
     tf.keras.backend.clear_session()
+    log_fh.write("Noisy Student model 3:\n")
     model3 = HMLC_L(drop_rate=drop_rate)
     # - Training
-    noisy_train_model(
+    model3 = noisy_train_model(
         model=model3,
         x_train=x_mix,
         y_train=y_mix,
@@ -225,9 +229,10 @@ def noisy_student_L(x_train,
 
     # - Train model1
     tf.keras.backend.clear_session()
+    log_fh.write("Noisy Student larger model 1:\n")
     model1 = HMLC_XL(drop_rate=drop_rate)
     # - Training
-    noisy_train_model(
+    model1 = noisy_train_model(
         model=model1,
         x_train=x_mix,
         y_train=y_mix,
@@ -249,9 +254,10 @@ def noisy_student_L(x_train,
 
     # - Train model2
     tf.keras.backend.clear_session()
+    log_fh.write("Noisy Student larger model 2:\n")
     model2 = HMLC_XXL(drop_rate=drop_rate)
     # - Training
-    noisy_train_model(
+    model2 = noisy_train_model(
         model=model2,
         x_train=x_mix,
         y_train=y_mix,

@@ -34,17 +34,17 @@ class HMLC(Model):
 
     def call(self, inputs, training=None):
         out_g1 = self.global_dense1(inputs)
-        out_l1 = self.local_dense1(inputs)
+        out_l1 = self.local_dense1(out_g1)
 
         in_g2 = self.add1([inputs, out_g1])
 
         out_g2 = self.global_dense2(in_g2)
-        out_l2 = self.local_dense2(in_g2)
+        out_l2 = self.local_dense2(out_g2)
 
         in_g3 = self.add2([inputs, out_g2])
 
         out_g3 = self.global_dense3(in_g3)
-        out_l3 = self.local_dense3(in_g3)
+        out_l3 = self.local_dense3(out_g3)
 
         in_g4 = self.add3([inputs, out_g3])
         in_g4 = self.dropout(in_g4)
@@ -152,17 +152,17 @@ class HMLC_M(HMLC):
 
     def call(self, inputs, training=None):
         out_g1 = self.global_dense1(inputs)
-        out_l1_1 = self.local_dense1_1(inputs)
+        out_l1_1 = self.local_dense1_1(out_g1)
         out_l1 = self.local_dense1(out_l1_1)
 
         in_g2 = self.add1([inputs, out_g1])
         out_g2 = self.global_dense2(in_g2)
-        out_l2_1 = self.local_dense2_1(in_g2)
+        out_l2_1 = self.local_dense2_1(out_g2)
         out_l2 = self.local_dense2(out_l2_1)
 
         in_g3 = self.add2([inputs, out_g2])
         out_g3 = self.global_dense3(in_g3)
-        out_l3_1 = self.local_dense3_1(in_g3)
+        out_l3_1 = self.local_dense3_1(out_g3)
         out_l3 = self.local_dense3(out_l3_1)
 
         in_g4 = self.add3([inputs, out_g3])
@@ -193,19 +193,19 @@ class HMLC_L(HMLC_M):
 
     def call(self, inputs, training=None):
         out_g1 = self.global_dense1(inputs)
-        out_l1_1 = self.local_dense1_1(inputs)
+        out_l1_1 = self.local_dense1_1(out_g1)
         out_l1_2 = self.local_dense1_2(out_l1_1)
         out_l1 = self.local_dense1(out_l1_2)
 
         in_g2 = self.add1([inputs, out_g1])
         out_g2 = self.global_dense2(in_g2)
-        out_l2_1 = self.local_dense2_1(in_g2)
+        out_l2_1 = self.local_dense2_1(out_g2)
         out_l2_2 = self.local_dense2_2(out_l2_1)
         out_l2 = self.local_dense2(out_l2_2)
 
         in_g3 = self.add2([inputs, out_g2])
         out_g3 = self.global_dense3(in_g3)
-        out_l3_1 = self.local_dense3_1(in_g3)
+        out_l3_1 = self.local_dense3_1(out_g3)
         out_l3_2 = self.local_dense3_2(out_l3_1)
         out_l3 = self.local_dense3(out_l3_2)
 
@@ -239,21 +239,21 @@ class HMLC_XL(HMLC_L):
     def call(self, inputs, training=None):
         out_g1 = self.global_dense1(inputs)
         out_g1 = self.global_dense1_2(out_g1)
-        out_l1_1 = self.local_dense1_1(inputs)
+        out_l1_1 = self.local_dense1_1(out_g1)
         out_l1_2 = self.local_dense1_2(out_l1_1)
         out_l1 = self.local_dense1(out_l1_2)
 
         in_g2 = self.add1([inputs, out_g1])
         out_g2 = self.global_dense2(in_g2)
         out_g2 = self.global_dense2_2(out_g2)
-        out_l2_1 = self.local_dense2_1(in_g2)
+        out_l2_1 = self.local_dense2_1(out_g2)
         out_l2_2 = self.local_dense2_2(out_l2_1)
         out_l2 = self.local_dense2(out_l2_2)
 
         in_g3 = self.add2([inputs, out_g2])
         out_g3 = self.global_dense3(in_g3)
         out_g3 = self.global_dense3_2(out_g3)
-        out_l3_1 = self.local_dense3_1(in_g3)
+        out_l3_1 = self.local_dense3_1(out_g3)
         out_l3_2 = self.local_dense3_2(out_l3_1)
         out_l3 = self.local_dense3(out_l3_2)
 
@@ -288,7 +288,7 @@ class HMLC_XXL(HMLC_XL):
         out_g1 = self.global_dense1(inputs)
         out_g1 = self.global_dense1_2(out_g1)
         out_g1 = self.global_dense1_3(out_g1)
-        out_l1_1 = self.local_dense1_1(inputs)
+        out_l1_1 = self.local_dense1_1(out_g1)
         out_l1_2 = self.local_dense1_2(out_l1_1)
         out_l1 = self.local_dense1(out_l1_2)
 
@@ -304,7 +304,7 @@ class HMLC_XXL(HMLC_XL):
         out_g3 = self.global_dense3(in_g3)
         out_g3 = self.global_dense3_2(out_g3)
         out_g3 = self.global_dense3_3(out_g3)
-        out_l3_1 = self.local_dense3_1(in_g3)
+        out_l3_1 = self.local_dense3_1(out_g3)
         out_l3_2 = self.local_dense3_2(out_l3_1)
         out_l3 = self.local_dense3(out_l3_2)
 

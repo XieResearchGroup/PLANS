@@ -23,7 +23,8 @@ def main(data_path,
          es_patience=5,
          log_path="../logs",
          comment=None,
-         if_hard=False):
+         if_hard=False,
+         unlabeled_weight=1.0):
     # Data
     data_loader = DataLoader(data_path)
     x_train, y_train, x_test, y_test = data_loader.load_data(columns)
@@ -65,7 +66,14 @@ def main(data_path,
     # - Initialize model1
     model1 = HMLC(drop_rate=drop_rate)
     # - Training
-    my_train_model(model1, x_train, y_train, x_test, y_val, y_eval)
+    log_f.write("Training teacher model: \n")
+    my_train_model(
+        model=model1,
+        x_train=x_train,
+        y_train=y_train,
+        x_test=x_test,
+        y_val=y_val,
+        y_eval=y_eval)
 
     # - Predict labels for unlabeled data with model1
     predictions = model1.predict(x_pred)[:, -5:]
@@ -85,9 +93,16 @@ def main(data_path,
 
     # Train model2 with soft labels
     tf.keras.backend.clear_session()
+    log_f.write("Train HMLC_M with soft labels: \n")
     model2 = HMLC_M(drop_rate=drop_rate)
     # - Training
-    my_train_model(model2, x_mix, y_mix, x_test, y_val, y_eval)
+    my_train_model(
+        model=model2,
+        x_train=x_mix,
+        y_train=y_mix,
+        x_test=x_test,
+        y_val=y_val,
+        y_eval=y_eval)
 
     # - Combine labeled and hard-labeled unlabeled training data
     x_mix = np.concatenate([x_train, x_pred], axis=0)
@@ -98,9 +113,16 @@ def main(data_path,
 
     # Train model3 with hard labels
     tf.keras.backend.clear_session()
+    log_f.write("Train HMLC_M model with hard labels:\n")
     model3 = HMLC_M(drop_rate=drop_rate)
     # - Training
-    my_train_model(model3, x_mix, y_mix, x_test, y_val, y_eval)
+    my_train_model(
+        model=model3,
+        x_train=x_mix,
+        y_train=y_mix,
+        x_test=x_test,
+        y_val=y_val,
+        y_eval=y_eval)
     log_f.close()
 
 

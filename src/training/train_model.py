@@ -3,12 +3,22 @@ from functools import partial
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
+from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.metrics import Precision, Recall, AUC, Accuracy
 import numpy as np
 from sklearn.metrics import accuracy_score
 
 from ..utils.label_convertors import convert2vec, hierarchical, fill_unlabeled
 from ..models.hmlc import HMLC, HMLC_M, HMLC_L, HMLC_XL, HMLC_XXL
+
+
+def scheduler(epoch):
+    if epoch < 2:
+        return 0.001
+    elif epoch < 10:
+        return 0.0001
+    else:
+        return 0.00001
 
 
 def train_model(model,
@@ -54,13 +64,14 @@ def train_model(model,
         restore_best_weights=True,
         mode="min"
     )
+    lrcb = LearningRateScheduler(scheduler)
     # - fit
     model.fit(
         x=x_train,
         y=y_train,
         batch_size=batch_size,
         epochs=epochs,
-        callbacks=[tbcb, escb],
+        callbacks=[tbcb, escb, lrcb],
         validation_data=[x_test, y_val]
     )
 

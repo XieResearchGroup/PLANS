@@ -7,9 +7,9 @@ from functools import partial
 
 import tensorflow as tf
 
-from models.hmlc import HMLC_M, HMLC_L
-from data_loaders.cvs_loader import CVSLoader
-from utils.label_convertors import convert2vec, convert2hier
+from ..models.hmlc import HMLC_M, HMLC_L
+from ..data_loaders.cvs_loader import CVSLoader
+from ..utils.label_convertors import convert2vec, convert2hier
 from .train_model import train_model
 from .training_args import TrainingArgs
 

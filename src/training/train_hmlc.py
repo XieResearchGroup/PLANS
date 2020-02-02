@@ -5,8 +5,8 @@
 import os
 from datetime import datetime
 
-from data_loaders.cvs_loader import CVSLoader
-from utils.label_convertors import convert2vec, convert2hier
+from ..data_loaders.cvs_loader import CVSLoader
+from ..utils.label_convertors import convert2vec, convert2hier
 from .train_model import noisy_student
 from .training_args import TrainingArgs
 

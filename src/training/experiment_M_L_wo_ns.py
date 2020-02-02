@@ -23,7 +23,9 @@ def experiment(data_path,
                epochs=30,
                es_patience=5,
                log_path="../logs",
-               comment=None):
+               if_hard=False,
+               comment=None,
+               unlabeled_weight=1):
     # Data
     data_loader = DataLoader(data_path)
     x_train, y_train, x_test, y_test = data_loader.load_data(columns)
@@ -51,8 +53,8 @@ def experiment(data_path,
     # Set up the train_model function
     my_train_model = partial(
         train_model,
+        unlabeled_weight=unlabeled_weight,
         learning_rate=learning_rate,
-        drop_rate=drop_rate,
         batch_size=batch_size,
         epochs=epochs,
         es_patience=es_patience,
@@ -74,14 +76,30 @@ def experiment(data_path,
     # - Initialize model1
     model1 = HMLC_M(drop_rate=drop_rate)
     # - Training
-    my_train_model(model1, x_train, y_train, x_test, y_val, y_eval)
+    log_f.write("Testing HMLC_M with labeled data:\n")
+    my_train_model(
+        model=model1,
+        x_train=x_train,
+        y_train=y_train,
+        x_test=x_test, 
+        y_val=y_val,
+        y_eval=y_eval)
 
     # Train model2
     # - Initialize model2
     tf.keras.backend.clear_session()
+    log_f.write("Testing HMLC_L with labeled data:\n")
     model2 = HMLC_L(drop_rate=drop_rate)
     # - Training
-    my_train_model(model2, x_train, y_train, x_test, y_val, y_eval)
+    my_train_model(
+        model=model2,
+        x_train=x_train,
+        y_train=y_train,
+        x_test=x_test,
+        y_val=y_val,
+        y_eval=y_eval)
+
+    log_f.close()
 
 
 if __name__ == "__main__":

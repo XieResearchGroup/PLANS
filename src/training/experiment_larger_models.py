@@ -65,6 +65,7 @@ def main(data_path,
         log_fh=log_f,
         comment=comment)
 
+    log_f.write("#" * 40 + "\n")
     log_f.close()
 
 

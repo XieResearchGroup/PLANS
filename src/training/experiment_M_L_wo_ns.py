@@ -99,6 +99,7 @@ def experiment(data_path,
         y_val=y_val,
         y_eval=y_eval)
 
+    log_f.write("#" * 40 + "\n")
     log_f.close()
 
 

@@ -13,10 +13,10 @@ from ..models.hmlc import HMLC, HMLC_M, HMLC_L, HMLC_XL, HMLC_XXL
 
 
 def scheduler(epoch):
-    if epoch < 2:
-        return 0.001
-    elif epoch < 10:
+    if epoch < 3:
         return 0.0001
+    elif epoch < 10:
+        return 0.00001
     else:
         return 0.00001
 

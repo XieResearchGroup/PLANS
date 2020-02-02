@@ -66,6 +66,7 @@ def main(data_path,
     # - Initialize model1
     model1 = HMLC(drop_rate=drop_rate)
     # - Training
+    log_f.write("#"*20 + "\n")
     log_f.write("Training teacher model: \n")
     my_train_model(
         model=model1,
@@ -123,6 +124,8 @@ def main(data_path,
         x_test=x_test,
         y_val=y_val,
         y_eval=y_eval)
+
+    log_f.write("#"*20 + "\n")
     log_f.close()
 
 

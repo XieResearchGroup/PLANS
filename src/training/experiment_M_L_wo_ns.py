@@ -81,7 +81,7 @@ def experiment(data_path,
         model=model1,
         x_train=x_train,
         y_train=y_train,
-        x_test=x_test, 
+        x_test=x_test,
         y_val=y_val,
         y_eval=y_eval)
 

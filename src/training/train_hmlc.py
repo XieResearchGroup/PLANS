@@ -35,8 +35,6 @@ def main(data_path,
     y_eval = convert2vec(y_test, dtype=int)    # for evaluation after training
 
     data_pred = data_loader.load_unlabeled(["ECFP", "Label"])
-    x_pred = data_pred[:, 0]
-    x_pred = convert2vec(x_pred, dtype=float)
 
     # Open log
     now = datetime.now()

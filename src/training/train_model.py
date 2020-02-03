@@ -14,11 +14,11 @@ from ..models.hmlc import HMLC, HMLC_M, HMLC_L, HMLC_XL, HMLC_XXL
 
 def scheduler(epoch):
     if epoch < 3:
-        return 0.0001
+        return 0.00005
     elif epoch < 10:
         return 0.00001
     else:
-        return 0.00001
+        return 0.000001
 
 
 def train_model(model,

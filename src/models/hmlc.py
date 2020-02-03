@@ -144,7 +144,7 @@ class HMLC_M(HMLC):
 
     def __init__(self, *args, **kwargs):
         super(HMLC_M, self).__init__(*args, **kwargs)
-        self.global_dense4 = Dense(int(self.fp_len/2), activation="elu")
+        self.global_dense4 = Dense(int(self.fp_len), activation="elu")
         self.global_dense5 = Dense(self.l3_len, activation=None)
         self.local_dense1_1 = Dense(self.fp_len, activation="elu")
         self.local_dense2_1 = Dense(self.fp_len, activation="elu")
@@ -185,11 +185,11 @@ class HMLC_L(HMLC_M):
 
     def __init__(self, *args, **kwargs):
         super(HMLC_L, self).__init__(*args, **kwargs)
-        self.global_dense5 = Dense(int(self.fp_len/4), activation="elu")
+        self.global_dense5 = Dense(int(self.fp_len), activation="elu")
         self.global_dense6 = Dense(self.l3_len, activation=None)
-        self.local_dense1_2 = Dense(int(self.fp_len/2), activation="elu")
-        self.local_dense2_2 = Dense(int(self.fp_len/2), activation="elu")
-        self.local_dense3_2 = Dense(int(self.fp_len/2), activation="elu")
+        self.local_dense1_2 = Dense(int(self.fp_len), activation="elu")
+        self.local_dense2_2 = Dense(int(self.fp_len), activation="elu")
+        self.local_dense3_2 = Dense(int(self.fp_len), activation="elu")
 
     def call(self, inputs, training=None):
         out_g1 = self.global_dense1(inputs)

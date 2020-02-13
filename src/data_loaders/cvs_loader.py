@@ -2,8 +2,8 @@ import random
 import itertools
 
 import pandas as pd
-import numpy as np
 from ._base_loader import _BaseDataLoader
+
 
 class CVSLoader(_BaseDataLoader):
 
@@ -41,7 +41,7 @@ class CVSLoader(_BaseDataLoader):
         self._training_rows = index[:splitter]
         self._testing_rows = index[splitter:]
         return self._training_rows, self._testing_rows
-    
+
     def load_data(self, cols, ratio=0.9, shuffle=True, nl_symbol="_"):
         """ Load the training and testing sets.
         params:

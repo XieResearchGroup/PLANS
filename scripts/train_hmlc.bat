@@ -5,3 +5,4 @@ python -m src.training.train_hmlc ^
 -l 0.001 ^
 --es-patience 5 ^
 --unlabeled-weight 0.5
+--log-path .\logs\hmlc

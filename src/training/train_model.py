@@ -9,16 +9,17 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 from ..utils.label_convertors import convert2vec, hierarchical, fill_unlabeled
+from ..utils.mixup import mixup
 from ..models.hmlc import HMLC, HMLC_M, HMLC_L, HMLC_XL, HMLC_XXL
 
 
 def scheduler(epoch):
-    if epoch < 3:
-        return 0.00005
-    elif epoch < 10:
-        return 0.00001
+    if epoch < 10:
+        return 0.0005
+    elif epoch < 50:
+        return 0.0001
     else:
-        return 0.000001
+        return 0.00001
 
 
 def train_model(model,
@@ -61,7 +62,7 @@ def train_model(model,
     escb = EarlyStopping(
         "val_loss",
         patience=es_patience,
-        restore_best_weights=True,
+        restore_best_weights=False,
         mode="min"
     )
     lrcb = LearningRateScheduler(scheduler)
@@ -102,7 +103,9 @@ def noisy_student(x_train,
                   es_patience,
                   log_path,
                   log_fh,
-                  comment):
+                  comment,
+                  mixup_=None,
+                  repeat=None):
 
     noisy_train_model = partial(
         train_model,
@@ -119,6 +122,9 @@ def noisy_student(x_train,
     log_fh.write("Noisy Student model 1:\n")
     tf.keras.backend.clear_session()
     model1 = HMLC(drop_rate=drop_rate)
+    if mixup_:
+        x_train, y_train = mixup(
+            mixup_, mixup_, x_train, y_train, repeat=repeat, shuffle=True)
     # - train model1
     model1 = noisy_train_model(
         model=model1,
@@ -145,6 +151,9 @@ def noisy_student(x_train,
     tf.keras.backend.clear_session()
     log_fh.write("Noisy Student model 2:\n")
     model2 = HMLC_M(drop_rate=drop_rate)
+    if mixup_:
+        x_mix, y_mix = mixup(
+            mixup_, mixup_, x_mix, y_mix, repeat=repeat, shuffle=True)
     # - Training
     model2 = noisy_train_model(
         model=model2,
@@ -170,6 +179,9 @@ def noisy_student(x_train,
     tf.keras.backend.clear_session()
     log_fh.write("Noisy Student model 3:\n")
     model3 = HMLC_L(drop_rate=drop_rate)
+    if mixup_:
+        x_mix, y_mix = mixup(
+            mixup_, mixup_, x_mix, y_mix, repeat=repeat, shuffle=True)
     # - Training
     model3 = noisy_train_model(
         model=model3,

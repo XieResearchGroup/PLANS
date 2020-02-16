@@ -138,7 +138,7 @@ class HMLC(Model):
             hier_vio_coef, (l1_l2 + l2_l3_1 + l2_l3_2 + l2_l3_3))
         hier_viol = tf.clip_by_value(hier_viol, epsilon, 5.)
         return hier_viol
-    
+
     def scheduler(self, epoch):
         if epoch < 3:
             return 0.00005
@@ -187,12 +187,12 @@ class HMLC_M(HMLC):
         final_out = tf.sigmoid(tf.concat(
             [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out
-    
+
     def scheduler(self, epoch):
         if epoch < 3:
-            return 0.00005
-        elif epoch < 5:
             return 0.00001
+        elif epoch < 5:
+            return 0.000005
         else:
             return 0.000001
 
@@ -242,14 +242,14 @@ class HMLC_L(HMLC_M):
         final_out = tf.sigmoid(tf.concat(
             [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out
-    
+
     def scheduler(self, epoch):
         if epoch < 3:
-            return 0.00005
-        elif epoch < 5:
             return 0.00001
-        else:
+        elif epoch < 5:
             return 0.000001
+        else:
+            return 0.0000001
 
 
 class HMLC_XL(HMLC_L):
@@ -298,7 +298,7 @@ class HMLC_XL(HMLC_L):
         final_out = tf.sigmoid(tf.concat(
             [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out
-    
+
     def scheduler(self, epoch):
         if epoch < 3:
             return 0.00005
@@ -357,7 +357,7 @@ class HMLC_XXL(HMLC_XL):
         final_out = tf.sigmoid(tf.concat(
             [out_l1, out_l2, out_l3, global_local_sum], axis=1))
         return final_out
-    
+
     def scheduler(self, epoch):
         if epoch < 3:
             return 0.00005

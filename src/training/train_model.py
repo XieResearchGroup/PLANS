@@ -13,15 +13,6 @@ from ..utils.mixup import mixup
 from ..models.hmlc import HMLC, HMLC_M, HMLC_L, HMLC_XL, HMLC_XXL
 
 
-def scheduler(epoch):
-    if epoch < 10:
-        return 0.0005
-    elif epoch < 50:
-        return 0.0001
-    else:
-        return 0.00001
-
-
 def train_model(model,
                 x_train,
                 y_train,
@@ -62,10 +53,10 @@ def train_model(model,
     escb = EarlyStopping(
         "val_loss",
         patience=es_patience,
-        restore_best_weights=False,
+        restore_best_weights=True,
         mode="min"
     )
-    lrcb = LearningRateScheduler(scheduler)
+    lrcb = LearningRateScheduler(model.scheduler)
     # - fit
     model.fit(
         x=x_train,

@@ -40,12 +40,6 @@ def main(data_path: str,
     y_eval = convert2vec(y_test, dtype=int)    # for evaluation after training
 
     data_pred = cyp_data_loader.load_unlabeled(["ECFP", "Label"])
-    outside_data = list()
-    for path in outside_data_path:
-        outside_df = pd.read_csv(path, nrows=100000)
-        outside_df["Label"] = np.array(["_"*5]*outside_df.shape[0])
-        outside_data.append(outside_df[["ECFP", "Label"]].to_numpy())
-    data_pred = np.concatenate([data_pred, *outside_data], axis=0)
 
     # Open log
     now = datetime.now()
@@ -56,6 +50,37 @@ def main(data_path: str,
     log_f_path = os.path.join(log_path, "logs.txt")
     log_f = open(log_f_path, "w")
 
+    # train control model
+    log_f.write("#" * 40 + "\n")
+    log_f.write("Noisy Student L w/o extra data" + "\n")
+    noisy_student_L(
+        x_train=x_train,
+        y_train=y_train,
+        unlabeled_weight=1,
+        x_test=x_test,
+        y_val=y_val,
+        y_eval=y_eval,
+        data_pred=data_pred,
+        learning_rate=learning_rate,
+        drop_rate=drop_rate,
+        batch_size=batch_size,
+        epochs=epochs,
+        es_patience=es_patience,
+        log_path=log_path,
+        log_fh=log_f,
+        comment=comment)
+
+    # add extra dataset into training set
+    for path in outside_data_path:
+        outside_df = pd.read_csv(path, nrows=100000)
+        outside_df["Label"] = np.array(["_"*5]*outside_df.shape[0])
+        data_pred = np.concatenate(
+            [data_pred, outside_df[["ECFP", "Label"]].to_numpy()],
+            axis=0)
+
+    # train Noisy Student L with extra data
+    log_f.write("#" * 40 + "\n")
+    log_f.write("Noisy Student L w/ extra data" + "\n")
     noisy_student_L(
         x_train=x_train,
         y_train=y_train,

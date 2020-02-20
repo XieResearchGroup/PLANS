@@ -200,6 +200,10 @@ def noisy_student_2(x_train,
                     log_path,
                     log_fh,
                     comment):
+    r""" Train HLMC with Noisy Student
+    The difference from noisy_student is this method utilize the partially
+    labeled data in the CYP450 training set.
+    """
 
     noisy_train_model = partial(
         train_model,
@@ -386,3 +390,26 @@ def noisy_student_L(x_train,
         y_eval=y_eval)
 
     return model2
+
+
+def predict_and_mix(model, x_pred, x, y, shuffle=True):
+    r""" Make predictions with the given model and mix it with the existing
+    training set.
+    model (tf.keras.Model): the pretrained model to make predictions
+    x_pred (np.array): inputs for the model
+    x (np.arrapy): training set data
+    y (np.array): training set label
+    shuffle (bool): if shuffle after mixing the training and predicted data
+    ===========================================================================
+    return:
+    x_mix: mixed training data
+    y_mix: mixed lables (soft)
+    """
+    y_pred = model.predict(x_pred)
+    x_mix = np.concatenate([x, x_pred], axis=0)
+    y_mix = np.concatenate([y, y_pred], axis=0)
+    if shuffle:
+        randomed_idx = np.random.permutation(x_mix.shape[0])
+        np.take(x_mix, randomed_idx, axis=0, out=x_mix)
+        np.take(y_mix, randomed_idx, axis=0, out=y_mix)
+    return x_mix, y_mix

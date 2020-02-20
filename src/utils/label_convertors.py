@@ -60,3 +60,17 @@ def fill_unlabeled(predictions, data_unlabeled, hard_label=False):
                         labeled[j] = predictions[i, j]
         data_labeled[i] = labeled
     return data_labeled
+
+
+def multilabel2onehot(multilabel: str):
+    """ Convert multilabel to onehot
+    multilabel (str): a multi-label with format like "10010"
+    ========================================================
+    return (str): onehot label as a string
+    """
+    # decide the length of the one-hot label
+    length = 2 ** len(multilabel)
+    onehot = [0] * length
+    # get the one-hot vector
+    onehot[int(multilabel, 2)] = 1
+    return "".join(map(str, onehot))

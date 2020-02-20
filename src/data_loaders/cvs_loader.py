@@ -31,7 +31,7 @@ class CVSLoader(_BaseDataLoader):
         try:
             index = self.data_df.loc[
                 ~self.data_df[self._cols[1]].str.contains(nl_symbol)].index
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, ValueError):
             index = self.data_df.loc[
                 self.data_df[self._cols[1]].notna()].index
         index = index.to_list()
@@ -72,7 +72,7 @@ class CVSLoader(_BaseDataLoader):
         try:
             index = self.data_df.loc[
                 self.data_df[cols[-1]].str.contains(nl_symbol)].index
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, ValueError):
             index = self.data_df.loc[
                 self.data_df[cols[-1]].isna()].index
         return self.data_df.loc[index, cols].to_numpy()

@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 from ..utils.label_convertors import convert2vec, hierarchical, fill_unlabeled
+from ..utils.training_utils import training_log
 from ..utils.mixup import mixup
 from ..models.hmlc import HMLC, HMLC_M, HMLC_L, HMLC_XL, HMLC_XXL
 
@@ -413,3 +414,66 @@ def predict_and_mix(model, x_pred, x, y, shuffle=True):
         np.take(x_mix, randomed_idx, axis=0, out=x_mix)
         np.take(y_mix, randomed_idx, axis=0, out=y_mix)
     return x_mix, y_mix
+
+
+def ns_linear_model(model,
+                    x_train,
+                    y_train,
+                    x_test,
+                    y_test,
+                    x_pred,
+                    batch_size,
+                    epochs,
+                    cb_list,
+                    log_f,
+                    n_repeat=3):
+    r""" Train linear model with Noisy Student
+    model: the model to be trained
+    x_train: training data
+    y_train: labels of the training data
+    x_pred: unlabeled training data
+    cb_list: callback list
+    log_f: logging file handler
+    n_repeat: times to train the model
+    ===========================================================================
+    return: the trained model
+    """
+    log_f.write("training {}:\n".format(str(model)))
+    train_his = model.fit(
+        x=x_train,
+        y=y_train,
+        batch_size=batch_size,
+        epochs=epochs,
+        callbacks=cb_list,
+        validation_data=[x_test, y_test]
+    )
+
+    y_pred = model.predict(x_test)
+    training_log(train_his, y_pred, y_test, log_f)
+
+    # repeat training the first model
+    for i in range(n_repeat):
+        log_f.write(
+            "repeat training {}, {}/{}:\n".format(str(model), i, n_repeat))
+        # label unlabled
+        x_mix, y_mix = predict_and_mix(
+            model=model,
+            x_pred=x_pred,
+            x=x_train,
+            y=y_train,
+            shuffle=True
+        )
+        # train model with the mixed data
+        train_his = model.fit(
+            x=x_mix,
+            y=y_mix,
+            batch_size=batch_size,
+            epochs=epochs,
+            callbacks=cb_list,
+            validation_data=[x_test, y_test]
+        )
+        # log training history
+        y_pred = model.predict(x_test)
+        training_log(train_his, y_pred, y_test, log_f)
+
+    return model

@@ -301,11 +301,11 @@ class HMLC_XL(HMLC_L):
 
     def scheduler(self, epoch):
         if epoch < 3:
-            return 0.00005
+            return 0.000005
         elif epoch < 5:
-            return 0.00001
-        else:
             return 0.000001
+        else:
+            return 0.0000001
 
 
 class HMLC_XXL(HMLC_XL):
@@ -360,8 +360,8 @@ class HMLC_XXL(HMLC_XL):
 
     def scheduler(self, epoch):
         if epoch < 3:
-            return 0.00005
+            return 0.000005
         elif epoch < 5:
-            return 0.00001
-        else:
             return 0.000001
+        else:
+            return 0.0000001

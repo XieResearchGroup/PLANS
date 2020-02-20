@@ -36,3 +36,58 @@ class Linear_S(Model):
             return 1e-6
         else:
             return 1e-7
+
+    def __str__(self):
+        return "Linear_S"
+
+
+class Linear_M(Linear_S):
+
+    def __init__(self, *args, **kwargs):
+        super(Linear_M, self).__init__(*args, **kwargs)
+        self.dense1_2 = Dense(self.fp_len * 3, activation="relu")
+        self.dense3_2 = Dense(self.fp_len * 3, activation="relu")
+
+    def call(self, inputs, training=None):
+        x = self.dense1(inputs)
+        x = self.dense1_2(x)
+        x = self.dense2(x)
+        x = self.dense3(x)
+        x = self.dense3_2(x)
+        x = self.dense4(x)
+        x = self.dense5(x)
+        x = self.dense6(x)
+        x = self.dense7(x)
+        x = self.dropout(x)
+        x = self.dense_out(x)
+        return x
+
+    def __str__(self):
+        return "Linear_M"
+
+
+class Linear_L(Linear_M):
+
+    def __init__(self, *args, **kwargs):
+        super(Linear_L, self).__init__(*args, **kwargs)
+        self.dense4_2 = Dense(self.fp_len * 6, activation="relu")
+        self.dense4_3 = Dense(self.fp_len * 6, activation="relu")
+
+    def call(self, inputs, training=None):
+        x = self.dense1(inputs)
+        x = self.dense1_2(x)
+        x = self.dense2(x)
+        x = self.dense3(x)
+        x = self.dense3_2(x)
+        x = self.dense4(x)
+        x = self.dense4_2(x)
+        x = self.dense4_3(x)
+        x = self.dense5(x)
+        x = self.dense6(x)
+        x = self.dense7(x)
+        x = self.dropout(x)
+        x = self.dense_out(x)
+        return x
+
+    def __str__(self):
+        return "Linear_L"

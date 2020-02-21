@@ -2,14 +2,14 @@ from functools import partial
 
 from ..models.linear import Linear_S, Linear_M, Linear_L
 from .train_model import ns_linear_model, predict_and_mix
-from .training_args import TrainingArgs
+from .training_args import LinearModelTrainingArgs
 from ..data_loaders.cvs_loader import CVSLoader
 from ..utils.label_convertors import convert2vec
 from ..utils.training_utils import init_model, callback_list
 from ..utils.training_utils import open_log
 
 
-def main(data_path, log_path, es_patience, batch_size, epochs):
+def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
     # data
     data_loader = CVSLoader(data_path)
     x_train, y_train, x_test, y_test = data_loader.load_data(
@@ -23,7 +23,7 @@ def main(data_path, log_path, es_patience, batch_size, epochs):
     x_unlabeled = convert2vec(x_unlabeled[:, 0], dtype=float)
 
     # Open log
-    log_f = open_log(log_path)
+    log_f, log_path = open_log(log_path)
 
     # init model Linear_S
     model = init_model(Linear_S)
@@ -41,7 +41,7 @@ def main(data_path, log_path, es_patience, batch_size, epochs):
         epochs=epochs,
         cb_list=cb_list,
         log_f=log_f,
-        n_repeat=3
+        n_repeat=n_repeat
     )
     x_mix, y_mix = predict_and_mix(
         trained_model,
@@ -67,7 +67,7 @@ def main(data_path, log_path, es_patience, batch_size, epochs):
         epochs=epochs,
         cb_list=cb_list,
         log_f=log_f,
-        n_repeat=3
+        n_repeat=n_repeat
     )
     x_mix, y_mix = predict_and_mix(
         trained_model,
@@ -93,19 +93,20 @@ def main(data_path, log_path, es_patience, batch_size, epochs):
         epochs=epochs,
         cb_list=cb_list,
         log_f=log_f,
-        n_repeat=3
+        n_repeat=n_repeat
     )
 
     log_f.close()
 
 
 if __name__ == "__main__":
-    parser = TrainingArgs()
+    parser = LinearModelTrainingArgs()
     args = parser.parse_args()
     main(
         data_path=args.data_path,
         log_path=args.log_path,
         es_patience=args.es_patience,
         batch_size=args.batch_size,
-        epochs=args.epochs
+        epochs=args.epochs,
+        n_repeat=args.repeat
     )

@@ -50,4 +50,4 @@ def open_log(log_path):
     os.makedirs(log_path, exist_ok=True)
     log_f_path = os.path.join(log_path, "logs.txt")
     log_f = open(log_f_path, "w")
-    return log_f
+    return log_f, log_path

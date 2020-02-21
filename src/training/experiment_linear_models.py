@@ -41,6 +41,7 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
         epochs=epochs,
         cb_list=cb_list,
         log_f=log_f,
+        log_path=log_path,
         n_repeat=n_repeat
     )
     x_mix, y_mix = predict_and_mix(
@@ -67,6 +68,7 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
         epochs=epochs,
         cb_list=cb_list,
         log_f=log_f,
+        log_path=log_path,
         n_repeat=n_repeat
     )
     x_mix, y_mix = predict_and_mix(
@@ -93,6 +95,7 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
         epochs=epochs,
         cb_list=cb_list,
         log_f=log_f,
+        log_path=log_path,
         n_repeat=n_repeat
     )
 

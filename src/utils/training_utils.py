@@ -51,3 +51,19 @@ def open_log(log_path):
     log_f_path = os.path.join(log_path, "logs.txt")
     log_f = open(log_f_path, "w")
     return log_f, log_path
+
+
+def find_best(histories, field, mode):
+    r""" Find the best value in the histories
+    histories (list): list of keras History objects
+    field (str): the field to find in the history
+    mode (str): "min" or "max". The method to find the best value in the field
+    ===========================================================================
+    return (list): list of best values in the History objects
+    """
+    method = {"min": min, "max": max}
+    find = method[mode]
+    bests = list()
+    for his in histories:
+        bests.append(find(his.history[field]))
+    return bests

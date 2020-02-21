@@ -7,6 +7,7 @@ from .training_args import LinearModelTrainingArgs
 from ..data_loaders.cvs_loader import CVSLoader
 from ..utils.label_convertors import convert2vec
 from ..utils.training_utils import init_model, callback_list, open_log
+from ..utils.training_utils import find_best
 
 
 def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
@@ -24,6 +25,9 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
 
     # Open log
     log_f, log_path = open_log(log_path)
+    # dicts for evaluating training results
+    best_loss = dict()
+    best_acc = dict()
 
     # init model Linear_S
     model = init_model(Linear_S)
@@ -46,6 +50,11 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
     )
     # plot the training history
     plot_history(histories, log_path, str(trained_model))
+    # log best results
+    min_loss = find_best(histories, "val_loss", "min")
+    max_acc = find_best(histories, "val_acc", "max")
+    best_loss[str(trained_model)] = min_loss
+    best_acc[str(trained_model)] = max_acc
 
     x_mix, y_mix = predict_and_mix(
         trained_model,
@@ -78,6 +87,11 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
     )
     # plot the training history
     plot_history(histories, log_path, str(trained_model))
+    # log best results
+    min_loss = find_best(histories, "val_loss", "min")
+    max_acc = find_best(histories, "val_acc", "max")
+    best_loss[str(trained_model)] = min_loss
+    best_acc[str(trained_model)] = max_acc
 
     x_mix, y_mix = predict_and_mix(
         trained_model,
@@ -110,6 +124,14 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
     )
     # plot the training history
     plot_history(histories, log_path, str(trained_model))
+    # log best results
+    min_loss = find_best(histories, "val_loss", "min")
+    max_acc = find_best(histories, "val_acc", "max")
+    best_loss[str(trained_model)] = min_loss
+    best_acc[str(trained_model)] = max_acc
+
+    log_f.write("best losses {}\n".format(str(best_loss)))
+    log_f.write("best accuracies {}\n".format(str(best_acc)))
 
     log_f.close()
 

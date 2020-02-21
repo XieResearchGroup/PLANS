@@ -1,3 +1,4 @@
+import os
 from functools import partial
 
 import tensorflow as tf
@@ -426,6 +427,7 @@ def ns_linear_model(model,
                     epochs,
                     cb_list,
                     log_f,
+                    log_path,
                     n_repeat=3):
     r""" Train linear model with Noisy Student
     model: the model to be trained
@@ -434,10 +436,12 @@ def ns_linear_model(model,
     x_pred: unlabeled training data
     cb_list: callback list
     log_f: logging file handler
+    log_path: path to the logging directory
     n_repeat: times to train the model
     ===========================================================================
     return: the trained model
     """
+    histories = list()
     log_f.write("training {}:\n".format(str(model)))
     train_his = model.fit(
         x=x_train,
@@ -447,6 +451,7 @@ def ns_linear_model(model,
         callbacks=cb_list,
         validation_data=[x_test, y_test]
     )
+    histories.append(train_his)
 
     y_pred = model.predict(x_test)
     training_log(train_his, y_pred, y_test, log_f)
@@ -472,8 +477,55 @@ def ns_linear_model(model,
             callbacks=cb_list,
             validation_data=[x_test, y_test]
         )
+        histories.append(train_his)
         # log training history
         y_pred = model.predict(x_test)
         training_log(train_his, y_pred, y_test, log_f)
+    # plot the training history
+    plot_history(histories, log_path, str(model))
 
     return model
+
+
+def plot_history(train_his, path, prefix):
+    r""" Plot the training history
+    train_his: Tensorflow History callback object
+    path: path to save the ploting
+    """
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(nrows=1, ncols=2, )
+    x_max = 0
+    y_loss_max = 0
+    y_acc_max = 0
+    for i, his in enumerate(train_his):
+        train_loss = his.history["loss"]
+        print("train loss: {}".format(train_loss))
+        val_loss = his.history["val_loss"]
+        train_acc = his.history["acc"]
+        print("train acc: {}".format(train_acc))
+        val_acc = his.history["val_acc"]
+        axes[0].plot(
+            list(range(len(train_loss))),
+            train_loss,
+            label="train_loss_"+str(i)
+        )
+        axes[0].plot(
+            list(range(len(val_loss))), val_loss, label="val_loss_"+str(i))
+        axes[1].plot(
+            list(range(len(train_acc))), train_acc, label="train_acc_"+str(i))
+        axes[1].plot(
+            list(range(len(val_acc))), val_acc, label="val_acc_"+str(i))
+        for data in [train_loss, val_loss]:
+            x_max = max(x_max, len(data))
+            y_loss_max = max(y_loss_max, max(data))
+        for data in [train_acc, val_acc]:
+            x_max = max(x_max, len(data))
+            y_acc_max = max(y_acc_max, max(data))
+    for ax in axes:
+        ax.set(xlim=[0, x_max+1])
+    axes[0].set(ylim=[0, y_loss_max+0.1], title="loss")
+    axes[0].legend()
+    axes[1].set(ylim=[0, y_acc_max+0.1], title="accuracy")
+    axes[1].legend()
+
+    plt.savefig(path+os.path.sep+prefix+"_training_results.png")

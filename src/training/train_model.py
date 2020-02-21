@@ -428,7 +428,9 @@ def ns_linear_teacher_model(model,
                             cb_list,
                             log_f,
                             log_path,
-                            n_repeat=3):
+                            n_repeat=3,
+                            mixup_coef=None,
+                            mixup_repeat=None):
     r""" Train linear model with Noisy Student
     model: the model to be trained
     x_train: training data
@@ -468,6 +470,9 @@ def ns_linear_teacher_model(model,
             y=y_train,
             shuffle=True
         )
+        if mixup_coef is not None:
+            x_mix, y_mix = mixup(mixup_coef, mixup_coef, x_mix, y_mix,
+                                 repeat=mixup_repeat, shuffle=True)
         # train model with the mixed data
         train_his = model.fit(
             x=x_mix,
@@ -498,7 +503,9 @@ def ns_linear_student_model(model,
                             cb_list,
                             log_f,
                             log_path,
-                            n_repeat=3):
+                            n_repeat=3,
+                            mixup_coef=None,
+                            mixup_repeat=None):
     r""" Train student linear model with Noisy Student
     model: the model to be trained
     x_train: training data
@@ -540,6 +547,9 @@ def ns_linear_student_model(model,
             y=y_train,
             shuffle=True
         )
+        if mixup_coef is not None:
+            x_mix, y_mix = mixup(mixup_coef, mixup_coef, x_mix, y_mix,
+                                 repeat=mixup_repeat, shuffle=True)
         # train model with the mixed data
         train_his = model.fit(
             x=x_mix,

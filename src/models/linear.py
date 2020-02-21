@@ -30,9 +30,9 @@ class Linear_S(Model):
         return x
 
     def scheduler(self, epoch):
-        if epoch < 10:
+        if epoch < 20:
             return 0.00001
-        elif epoch < 20:
+        elif epoch < 40:
             return 1e-6
         else:
             return 1e-7

@@ -454,7 +454,7 @@ def ns_linear_model(model,
     # repeat training the first model
     for i in range(n_repeat):
         log_f.write(
-            "repeat training {}, {}/{}:\n".format(str(model), i, n_repeat))
+            "repeat training {}, {}/{}:\n".format(str(model), i+1, n_repeat))
         # label unlabled
         x_mix, y_mix = predict_and_mix(
             model=model,

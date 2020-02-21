@@ -76,3 +76,11 @@ class CVSLoader(_BaseDataLoader):
             index = self.data_df.loc[
                 self.data_df[cols[-1]].isna()].index
         return self.data_df.loc[index, cols].to_numpy()
+
+    def load_col(self, col_name):
+        r""" Load a single column from the cvs file
+        col_name (str): Name of the column.
+        =======================================================================
+        return (numpy array): Data in the colume.
+        """
+        return self.data_df[col_name].to_numpy()

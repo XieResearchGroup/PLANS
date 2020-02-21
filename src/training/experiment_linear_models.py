@@ -5,8 +5,7 @@ from .train_model import ns_linear_model, predict_and_mix
 from .training_args import LinearModelTrainingArgs
 from ..data_loaders.cvs_loader import CVSLoader
 from ..utils.label_convertors import convert2vec
-from ..utils.training_utils import init_model, callback_list
-from ..utils.training_utils import open_log
+from ..utils.training_utils import init_model, callback_list, open_log
 
 
 def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):

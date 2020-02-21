@@ -1,7 +1,8 @@
 from functools import partial
 
 from ..models.linear import Linear_S, Linear_M, Linear_L
-from .train_model import ns_linear_model, predict_and_mix
+from .train_model import ns_linear_teacher_model, ns_linear_student_model
+from .train_model import predict_and_mix, plot_history
 from .training_args import LinearModelTrainingArgs
 from ..data_loaders.cvs_loader import CVSLoader
 from ..utils.label_convertors import convert2vec
@@ -29,7 +30,7 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
     # callbacks
     cb_list = callback_list(log_path, es_patience, model)
     # fit
-    trained_model = ns_linear_model(
+    trained_model, histories = ns_linear_teacher_model(
         model=model,
         x_train=x_train,
         y_train=y_train,
@@ -43,6 +44,9 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
         log_path=log_path,
         n_repeat=n_repeat
     )
+    # plot the training history
+    plot_history(histories, log_path, str(trained_model))
+
     x_mix, y_mix = predict_and_mix(
         trained_model,
         x_unlabeled,
@@ -56,10 +60,12 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
     # callbacks
     cb_list = callback_list(log_path, es_patience, model)
     # fit Linear_M model to mixed dataset
-    trained_model = ns_linear_model(
+    trained_model, histories = ns_linear_student_model(
         model=model,
-        x_train=x_mix,
-        y_train=y_mix,
+        x_train=x_train,
+        y_train=y_train,
+        x_mix=x_mix,
+        y_mix=y_mix,
         x_test=x_test,
         y_test=y_test,
         x_pred=x_unlabeled,
@@ -70,6 +76,9 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
         log_path=log_path,
         n_repeat=n_repeat
     )
+    # plot the training history
+    plot_history(histories, log_path, str(trained_model))
+
     x_mix, y_mix = predict_and_mix(
         trained_model,
         x_unlabeled,
@@ -83,10 +92,12 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
     # callbacks
     cb_list = callback_list(log_path, es_patience, model)
     # fit Linear_L model to mixed dataset
-    ns_linear_model(
+    trained_model, histories = ns_linear_student_model(
         model=model,
-        x_train=x_mix,
-        y_train=y_mix,
+        x_train=x_train,
+        y_train=y_train,
+        x_mix=x_mix,
+        y_mix=y_mix,
         x_test=x_test,
         y_test=y_test,
         x_pred=x_unlabeled,
@@ -97,6 +108,8 @@ def main(data_path, log_path, es_patience, batch_size, epochs, n_repeat):
         log_path=log_path,
         n_repeat=n_repeat
     )
+    # plot the training history
+    plot_history(histories, log_path, str(trained_model))
 
     log_f.close()
 

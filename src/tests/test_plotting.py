@@ -61,7 +61,7 @@ def plot_history(train_his):
     axes[1].set(ylim=[0, y_acc_max+0.1], title="accuracy")
 
     fig.savefig(
-        "training_results.png", bbox_extra_artists=lgd, bbox_inches='tight')
+        "training_results.png", bbox_extra_artists=lgds, bbox_inches='tight')
 
 
 plot_history(data)

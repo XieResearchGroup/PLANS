@@ -573,7 +573,7 @@ def plot_history(train_his, path, prefix):
     path: path to save the ploting
     """
     import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(nrows=1, ncols=2, )
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=[12.8, 4.8])
     x_max = 0
     y_loss_max = 0
     y_acc_max = 0
@@ -601,9 +601,13 @@ def plot_history(train_his, path, prefix):
             y_acc_max = max(y_acc_max, max(data))
     for ax in axes:
         ax.set(xlim=[0, x_max+1])
+        handles, labels = ax.get_legend_handles_labels()
+        handles = [h for _, h in sorted(zip(labels, handles))]
+        labels.sort()
+        ax.legend(handles, labels,
+                  bbox_to_anchor=(0., 0.1, 1, 0),
+                  loc=9, ncol=2, mode=None, borderaxespad=0.)
     axes[0].set(ylim=[0, y_loss_max+0.1], title="loss")
-    axes[0].legend()
     axes[1].set(ylim=[0, y_acc_max+0.1], title="accuracy")
-    axes[1].legend()
 
     plt.savefig(path+os.path.sep+prefix+"_training_results.png")

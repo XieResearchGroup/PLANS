@@ -55,3 +55,13 @@ class LMMixupArgs(LinearModelTrainingArgs):
                           "in mixup.")
         self.add_argument("--mixup-repeat", default=5, type=int,
                           help="Times to repeat the dataset when apply mixup.")
+
+
+class ConventionalArgs(BaseArgs):
+
+    def __init__(self):
+        super(ConventionalArgs, self).__init__()
+        self.add_argument("--n-estimators", default=500, type=int,
+                          help="Number of estimators.")
+        self.add_argument("--max-depth", default=None, type=int,
+                          help="The max depth of the trees.")

@@ -8,6 +8,7 @@ from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.metrics import Precision, Recall, AUC, Accuracy
 import numpy as np
 from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
 
 from ..utils.label_convertors import convert2vec, hierarchical, fill_unlabeled
 from ..utils.training_utils import training_log
@@ -572,7 +573,6 @@ def plot_history(train_his, path, prefix):
     train_his: Tensorflow History callback object
     path: path to save the ploting
     """
-    import matplotlib.pyplot as plt
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=[12.8, 4.8])
     x_max = 0
     y_loss_max = 0
@@ -599,15 +599,21 @@ def plot_history(train_his, path, prefix):
         for data in [train_acc, val_acc]:
             x_max = max(x_max, len(data))
             y_acc_max = max(y_acc_max, max(data))
+
+    lgds = list()
     for ax in axes:
         ax.set(xlim=[0, x_max+1])
         handles, labels = ax.get_legend_handles_labels()
         handles = [h for _, h in sorted(zip(labels, handles))]
         labels.sort()
-        ax.legend(handles, labels,
-                  bbox_to_anchor=(0., 0.1, 1, 0),
-                  loc=9, ncol=2, mode=None, borderaxespad=0.)
+        lgd = ax.legend(handles, labels,
+                        bbox_to_anchor=(0., -0.1, 1, 0),
+                        loc=9, ncol=2, mode=None, borderaxespad=0.)
+        lgds.append(lgd)
+
     axes[0].set(ylim=[0, y_loss_max+0.1], title="loss")
     axes[1].set(ylim=[0, y_acc_max+0.1], title="accuracy")
 
-    plt.savefig(path+os.path.sep+prefix+"_training_results.png")
+    plt.savefig(path+os.path.sep+prefix+"_training_results.png",
+                bbox_extra_artists=lgds,
+                bbox_inches='tight')

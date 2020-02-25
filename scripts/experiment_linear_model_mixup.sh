@@ -1,9 +1,11 @@
-CUDA_VISIBLE_DEVICES=$1 python -m src.training.experiment_linear_model_mixup \
+CUDA_VISIBLE_DEVICES=$1 \
+python -m src.training.experiment_linear_drugbank_mixup \
 -p ./data/fromraw_cid_inchi_smiles_fp_labels_onehots.csv \
--e 500 \
+--outside-path ./data/DrugBank_smiles_fp.csv \
+-e 1000 \
 -b 256 \
 --es-patience 20 \
---log-path ./logs/linear \
+--log-path ./logs/linear/drugbank_mixup \
 --repeat 5 \
 --mixup 0.4 \
 --mixup-repeat 10

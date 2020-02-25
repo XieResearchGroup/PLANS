@@ -5,6 +5,9 @@ import pandas as pd
 from ._base_loader import _BaseDataLoader
 
 
+random.seed(623890)
+
+
 class CVSLoader(_BaseDataLoader):
 
     def __init__(self, path, *_, **kwargs):

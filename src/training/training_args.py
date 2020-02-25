@@ -57,6 +57,12 @@ class LMMixupArgs(LinearModelTrainingArgs):
                           help="Times to repeat the dataset when apply mixup.")
 
 
+class LMMixupOutsideDataArgs(LMOutsideDataArgs, LMMixupArgs):
+
+    def __init__(self):
+        super(LMMixupOutsideDataArgs, self).__init__()
+
+
 class ConventionalArgs(BaseArgs):
 
     def __init__(self):

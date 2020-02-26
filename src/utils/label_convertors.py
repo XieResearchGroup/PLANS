@@ -74,3 +74,23 @@ def multilabel2onehot(multilabel: str):
     # get the one-hot vector
     onehot[int(multilabel, 2)] = 1
     return "".join(map(str, onehot))
+
+
+def vec2onehot(vec):
+    r""" Convert a multilabel vector to one hot
+    """
+    label = "".join(list(map(str, vec)))
+    onehot = [0] * (2 ** len(label))
+    onehot[int(label, 2)] = 1
+    return onehot
+
+
+def multivec2onehot(multilabel: np.array):
+    r"""Convert multilabel to onehot
+    multilabel (np.array): a multi-label numpy array
+    ========================================================
+    return (np.array): onehot label as numpy array
+    """
+    # decide the output shape
+    onehot = np.apply_along_axis(vec2onehot, 1, multilabel)
+    return onehot

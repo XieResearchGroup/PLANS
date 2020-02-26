@@ -33,19 +33,19 @@ class ExperimentSeparateModels(ExperimentBase):
         return x_train, y_train, x_test, y_test, x_unlabeled, \
             y_train_oh, y_test_oh
 
-    def train_student(self,
-                      student_model,
-                      teacher_models,
-                      x_train,
-                      y_train,
-                      x_test,
-                      y_test,
-                      x_pred,
-                      batch_size,
-                      epochs,
-                      log_f,
-                      log_path,
-                      n_repeat):
+    def train_first_student(self,
+                            student_model,
+                            teacher_models,
+                            x_train,
+                            y_train,
+                            x_test,
+                            y_test,
+                            x_pred,
+                            batch_size,
+                            epochs,
+                            log_f,
+                            log_path,
+                            n_repeat):
         x_mix, y_mix = predict_with_multiteacher_and_mix(teacher_models,
                                                          x_pred,
                                                          x_train,
@@ -102,11 +102,27 @@ class ExperimentSeparateModels(ExperimentBase):
             trained_models.append(trained_model)
             model_histories.append(histories)
 
-        # train student models
-        for student in [Linear_S, Linear_M, Linear_L]:
-            trained_student, histories = self.train_student(
+        # train first student model
+        trained_model, histories = self.train_first_student(
+            student_model=Linear_S,
+            teacher_models=trained_models,
+            x_train=x_train,
+            y_train=y_train_oh,
+            x_test=x_test,
+            y_test=y_test_oh,
+            x_pred=x_unlabeled,
+            batch_size=self.batch_size,
+            epochs=self.epochs,
+            log_f=log_f,
+            log_path=log_path,
+            n_repeat=self.n_repeat
+        )
+
+        # train other students
+        for student in [Linear_M, Linear_L]:
+            trained_model, histories = self.train_student(
                 student_model=student,
-                teacher_models=trained_models,
+                teacher_models=trained_model,
                 x_train=x_train,
                 y_train=y_train_oh,
                 x_test=x_test,

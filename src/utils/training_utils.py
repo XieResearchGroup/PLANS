@@ -8,8 +8,12 @@ import numpy as np
 
 def init_model(Model):
     model = Model()
+    if model.out_len == 1:
+        loss = "binary_crossentropy"
+    else:
+        loss = "categorical_crossentropy"
     model.compile(
-        loss="categorical_crossentropy",
+        loss=loss,
         optimizer="adam",
         metrics=["acc"]
     )
@@ -30,8 +34,12 @@ def callback_list(log_path, es_patience, model):
 
 
 def training_log(train_his, y_pred, y_truth, log_f):
-    predictions = np.argmax(y_pred, axis=1)
-    truth = np.argmax(y_truth, axis=1)
+    if y_truth.shape[1] == 1:
+        predictions = np.squeeze(np.round(y_pred)).astype(int)
+        truth = np.squeeze(y_truth).astype(int)
+    else:
+        predictions = np.argmax(y_pred, axis=1)
+        truth = np.argmax(y_truth, axis=1)
     # log training history
     for k, v in train_his.history.items():
         log_f.write(k+"\n")

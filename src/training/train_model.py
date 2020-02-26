@@ -418,6 +418,31 @@ def predict_and_mix(model, x_pred, x, y, shuffle=True):
     return x_mix, y_mix
 
 
+def predict_with_multiteacher_and_mix(teachers, x_pred, x, y, shuffle=True):
+    r""" Make predictions with multiple teacher models. Each teacher predicts
+    the label for one class only.
+    model (list): a list of pretrained models to make predictions
+    x_pred (np.array): inputs for the model
+    x (np.arrapy): training set data
+    y (np.array): training set label
+    shuffle (bool): if shuffle after mixing the training and predicted data
+    ===========================================================================
+    return:
+    x_mix: mixed training data
+    y_mix: mixed lables (soft)
+    """
+    y_pred = np.array(x_pred.shape[0], len(teachers))
+    for i, model in enumerate(teachers):
+        y_pred[:, i] = model.predict(x_pred)
+    x_mix = np.concatenate([x, x_pred], axis=0)
+    y_mix = np.concatenate([y, y_pred], axis=0)
+    if shuffle:
+        randomed_idx = np.random.permutation(x_mix.shape[0])
+        np.take(x_mix, randomed_idx, axis=0, out=x_mix)
+        np.take(y_mix, randomed_idx, axis=0, out=y_mix)
+    return x_mix, y_mix
+
+
 def ns_linear_teacher_model(model,
                             x_train,
                             y_train,

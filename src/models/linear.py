@@ -7,6 +7,8 @@ class Linear_S(Model):
     def __init__(self, fp_len=2048, drop_rate=0.3, out_len=32):
         super(Linear_S, self).__init__()
         self.fp_len = fp_len
+        self.drop_rate = drop_rate
+        self.out_len = out_len
         self.dense1 = Dense(fp_len * 2, activation="relu")
         self.dense2 = Dense(fp_len * 4, activation="relu")
         self.dense3 = Dense(fp_len * 4, activation="relu")
@@ -15,7 +17,10 @@ class Linear_S(Model):
         self.dense6 = Dense(int(fp_len//2), activation="relu")
         self.dense7 = Dense(int(fp_len//4), activation="relu")
         self.dropout = Dropout(drop_rate)
-        self.dense_out = Dense(out_len, activation="softmax")
+        if out_len > 1:
+            self.dense_out = Dense(out_len, activation="softmax")
+        else:
+            self.dense_out = Dense(out_len, activation="sigmoid")
 
     def call(self, inputs, training=None):
         x = self.dense1(inputs)
@@ -39,6 +44,10 @@ class Linear_S(Model):
 
     def __str__(self):
         return "Linear_S"
+
+    @property
+    def name(self):
+        return self.__str__()
 
 
 class Linear_M(Linear_S):

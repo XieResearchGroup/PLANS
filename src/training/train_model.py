@@ -431,7 +431,7 @@ def predict_with_multiteacher_and_mix(teachers, x_pred, x, y, shuffle=True):
     x_mix: mixed training data
     y_mix: mixed lables (soft)
     """
-    y_pred = np.array(x_pred.shape[0], len(teachers))
+    y_pred = np.zeros((x_pred.shape[0], len(teachers)))
     for i, model in enumerate(teachers):
         y_pred[:, i] = model.predict(x_pred)
     x_mix = np.concatenate([x, x_pred], axis=0)

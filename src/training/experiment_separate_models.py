@@ -6,7 +6,7 @@ from .train_model import ns_linear_student_model
 from .train_model import predict_with_multiteacher_and_mix
 from ..utils.training_utils import init_model, callback_list
 from ..models.linear import Linear_S, Linear_M, Linear_L
-from ..utils.label_convertors import convert2vec
+from ..utils.label_convertors import convert2vec, multivec2onehot
 from ..data_loaders.cvs_loader import CVSLoader
 
 
@@ -100,6 +100,7 @@ class ExperimentSeparateModels(ExperimentBase):
             model_histories.append(histories)
 
         # train student models
+        y_train = multivec2onehot(y_train)
         for student in [Linear_S, Linear_M, Linear_L]:
             trained_student, histories = self.train_student(
                 student_model=student,

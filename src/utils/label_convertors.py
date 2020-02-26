@@ -79,7 +79,7 @@ def multilabel2onehot(multilabel: str):
 def vec2onehot(vec):
     r""" Convert a multilabel vector to one hot
     """
-    label = "".join(list(map(str, vec)))
+    label = "".join(list(map(str, map(int, vec))))
     onehot = [0] * (2 ** len(label))
     onehot[int(label, 2)] = 1
     return onehot

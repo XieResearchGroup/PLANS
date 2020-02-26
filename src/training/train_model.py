@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 
 from ..utils.label_convertors import convert2vec, hierarchical, fill_unlabeled
-from ..utils.label_convertors import multilabel2onehot
+from ..utils.label_convertors import multivec2onehot
 from ..utils.training_utils import training_log
 from ..utils.mixup import mixup
 from ..models.hmlc import HMLC, HMLC_M, HMLC_L, HMLC_XL, HMLC_XXL
@@ -435,7 +435,7 @@ def predict_with_multiteacher_and_mix(teachers, x_pred, x, y, shuffle=True):
     y_pred = np.zeros((x_pred.shape[0], len(teachers)))
     for i, model in enumerate(teachers):
         y_pred[:, i] = model.predict(x_pred).squeeze()
-    y_pred = multilabel2onehot(y_pred)
+    y_pred = multivec2onehot(y_pred)
     x_mix = np.concatenate([x, x_pred], axis=0)
     y_mix = np.concatenate([y, y_pred], axis=0)
     if shuffle:

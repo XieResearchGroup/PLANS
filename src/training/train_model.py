@@ -433,7 +433,7 @@ def predict_with_multiteacher_and_mix(teachers, x_pred, x, y, shuffle=True):
     """
     y_pred = np.zeros((x_pred.shape[0], len(teachers)))
     for i, model in enumerate(teachers):
-        y_pred[:, i] = model.predict(x_pred)
+        y_pred[:, i] = model.predict(x_pred).squeeze()
     x_mix = np.concatenate([x, x_pred], axis=0)
     y_mix = np.concatenate([y, y_pred], axis=0)
     if shuffle:

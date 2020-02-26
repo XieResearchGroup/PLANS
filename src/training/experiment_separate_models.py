@@ -117,6 +117,8 @@ class ExperimentSeparateModels(ExperimentBase):
             log_path=log_path,
             n_repeat=self.n_repeat
         )
+        # log results
+        self.log_training(trained_model, histories, log_path)
 
         # train other students
         for student in [Linear_M, Linear_L]:

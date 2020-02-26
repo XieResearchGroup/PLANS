@@ -28,7 +28,10 @@ class ExperimentSeparateModels(ExperimentBase):
             x_train, y_train = self._mixup(x_train, y_train)
         x_unlabeled = data_loader.load_unlabeled(["ECFP", "Label"])
         x_unlabeled = convert2vec(x_unlabeled[:, 0], dtype=float)
-        return x_train, y_train, x_test, y_test, x_unlabeled
+        y_train_oh = multivec2onehot(y_train)
+        y_test_oh = multivec2onehot(y_test)
+        return x_train, y_train, x_test, y_test, x_unlabeled, \
+            y_train_oh, y_test_oh
 
     def train_student(self,
                       student_model,
@@ -74,8 +77,8 @@ class ExperimentSeparateModels(ExperimentBase):
 
     def run_experiment(self):
         # load training and testing data
-        x_train, y_train, x_test, y_test, x_unlabeled = self.load_data(
-            self.data_path)
+        x_train, y_train, x_test, y_test, x_unlabeled, y_train_oh, y_test_oh =\
+            self.load_data(self.data_path)
         # open log
         log_f, log_path = self.open_log_(self.log_path)
         # train five separated teacher models
@@ -100,15 +103,14 @@ class ExperimentSeparateModels(ExperimentBase):
             model_histories.append(histories)
 
         # train student models
-        y_train = multivec2onehot(y_train)
         for student in [Linear_S, Linear_M, Linear_L]:
             trained_student, histories = self.train_student(
                 student_model=student,
                 teacher_models=trained_models,
                 x_train=x_train,
-                y_train=y_train,
+                y_train=y_train_oh,
                 x_test=x_test,
-                y_test=y_test,
+                y_test=y_test_oh,
                 x_pred=x_unlabeled,
                 batch_size=self.batch_size,
                 epochs=self.epochs,

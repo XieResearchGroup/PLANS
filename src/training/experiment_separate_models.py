@@ -119,6 +119,8 @@ class ExperimentSeparateModels(ExperimentBase):
         )
         # log results
         self.log_training(trained_model, histories, log_path)
+        # free memory
+        del trained_models
 
         # train other students
         for student in [Linear_M, Linear_L]:

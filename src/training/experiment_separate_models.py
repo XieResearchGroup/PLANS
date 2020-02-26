@@ -1,5 +1,7 @@
 from functools import partial
 
+import tensorflow as tf
+
 from .experiment_base import ExperimentBase
 from .training_args import LMMixupArgs
 from .train_model import ns_linear_student_model
@@ -120,7 +122,7 @@ class ExperimentSeparateModels(ExperimentBase):
         # log results
         self.log_training(trained_model, histories, log_path)
         # free memory
-        del trained_models
+        tf.reset_default_graph()
 
         # train other students
         for student in [Linear_M, Linear_L]:

@@ -126,7 +126,7 @@ class ExperimentSeparateModels(ExperimentBase):
         for student in [Linear_M, Linear_L]:
             trained_model, histories = self.train_student(
                 student_model=student,
-                teacher_models=trained_model,
+                teacher_model=trained_model,
                 x_train=x_train,
                 y_train=y_train_oh,
                 x_test=x_test,

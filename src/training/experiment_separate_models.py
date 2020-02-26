@@ -97,7 +97,7 @@ class ExperimentSeparateModels(ExperimentBase):
                 epochs=self.epochs,
                 log_f=log_f,
                 log_path=log_path,
-                n_repeat=0
+                n_repeat=self.n_repeat
             )
             trained_models.append(trained_model)
             model_histories.append(histories)

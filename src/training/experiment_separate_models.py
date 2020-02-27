@@ -1,6 +1,7 @@
 from functools import partial
 
-import tensorflow as tf
+# import tensorflow as tf
+import gc
 
 from .experiment_base import ExperimentBase
 from .training_args import LMMixupArgs
@@ -85,7 +86,7 @@ class ExperimentSeparateModels(ExperimentBase):
         log_f, log_path = self.open_log_(self.log_path)
         # train five separated teacher models
         trained_models = list()
-        model_histories = list()
+        # model_histories = list()
         teacher_model = partial(Linear_S, out_len=1)
         for i in range(y_train.shape[1]):
             trained_model, histories = self.train_teacher(
@@ -102,7 +103,7 @@ class ExperimentSeparateModels(ExperimentBase):
                 n_repeat=self.n_repeat
             )
             trained_models.append(trained_model)
-            model_histories.append(histories)
+            # model_histories.append(histories)
 
         # train first student model
         trained_model, histories = self.train_first_student(
@@ -122,7 +123,8 @@ class ExperimentSeparateModels(ExperimentBase):
         # log results
         self.log_training(trained_model, histories, log_path)
         # free memory
-        tf.reset_default_graph()
+        del trained_models
+        gc.collect()
 
         # train other students
         for student in [Linear_M, Linear_L]:

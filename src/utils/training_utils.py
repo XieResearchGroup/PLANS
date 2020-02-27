@@ -46,6 +46,7 @@ def training_log(train_his, y_pred, y_truth, log_f):
         log_f.write(k+"\n")
         log_f.write(str(v)[1:-1]+"\n\n")
     log_f.write("="*80+"\n")
+    log_f.write("@prediction-truth\n")
     for pred, tr in zip(predictions, truth):
         log_f.write(str(pred)+" "+str(tr)+"\n")
     log_f.write("="*80+"\n")

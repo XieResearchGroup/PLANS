@@ -36,6 +36,9 @@ class LinearModelTrainingArgs(BaseArgs):
         self.add_argument("--repeat", type=int, default=3,
                           help="Times to repeat when training the model with "
                           "Noisy Student.")
+        self.add_argument("--rand-seed", type=int, default=None,
+                          help="Random seed used to generate training and "
+                               "testing data.")
 
 
 class LMOutsideDataArgs(LinearModelTrainingArgs):
@@ -63,7 +66,7 @@ class LMMixupOutsideDataArgs(LMOutsideDataArgs, LMMixupArgs):
         super(LMMixupOutsideDataArgs, self).__init__()
 
 
-class ConventionalArgs(BaseArgs):
+class ConventionalArgs(LinearModelTrainingArgs):
 
     def __init__(self):
         super(ConventionalArgs, self).__init__()

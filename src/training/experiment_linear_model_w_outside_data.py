@@ -18,9 +18,10 @@ def main(data_path,
          es_patience,
          batch_size,
          epochs,
-         n_repeat):
+         n_repeat,
+         rand_seed=None):
     # data
-    data_loader = CVSLoader(data_path)
+    data_loader = CVSLoader(data_path, rand_seed=rand_seed)
     outside_data_loader = CVSLoader(outside_data_path)
     x_train, y_train, x_test, y_test = data_loader.load_data(
         ["ECFP", "onehot_label"],
@@ -158,5 +159,6 @@ if __name__ == "__main__":
         es_patience=args.es_patience,
         batch_size=args.batch_size,
         epochs=args.epochs,
-        n_repeat=args.repeat
+        n_repeat=args.repeat,
+        rand_seed=args.rand_seed
     )

@@ -21,7 +21,8 @@ class ExperimentLinearMixup():
                  epochs,
                  n_repeat,
                  mixup,
-                 mixup_repeat):
+                 mixup_repeat,
+                 rand_seed=None):
         self.data_path = data_path
         self.log_path = log_path
         self.es_patience = es_patience
@@ -30,6 +31,7 @@ class ExperimentLinearMixup():
         self.n_repeat = n_repeat
         self.mixup = mixup
         self.mixup_repeat = mixup_repeat
+        self.rand_seed = rand_seed
         self.best_loss = dict()
         self.best_acc = dict()
 
@@ -39,7 +41,7 @@ class ExperimentLinearMixup():
         return x_mix, y_mix
 
     def load_data(self, data_path):
-        data_loader = CVSLoader(data_path)
+        data_loader = CVSLoader(data_path, rand_seed=self.rand_seed)
         x_train, y_train, x_test, y_test = data_loader.load_data(
             ["ECFP", "onehot_label"],
             ratio=0.7,
@@ -192,6 +194,7 @@ if __name__ == "__main__":
         epochs=args.epochs,
         n_repeat=args.repeat,
         mixup=args.mixup,
-        mixup_repeat=args.mixup_repeat
+        mixup_repeat=args.mixup_repeat,
+        rand_seed=args.rand_seed
     )
     experiment.run_experiment()

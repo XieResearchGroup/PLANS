@@ -20,7 +20,8 @@ class ExperimentLinearOutsideMixup(ExperimentLinearMixup):
                  epochs,
                  n_repeat,
                  mixup,
-                 mixup_repeat):
+                 mixup_repeat,
+                 rand_seed=None):
         super().__init__(data_path,
                          log_path,
                          es_patience,
@@ -28,11 +29,12 @@ class ExperimentLinearOutsideMixup(ExperimentLinearMixup):
                          epochs,
                          n_repeat,
                          mixup,
-                         mixup_repeat)
+                         mixup_repeat,
+                         rand_seed)
         self.outside_data_path = outside_data_path
 
     def load_data(self, data_path, outside_data_path):
-        data_loader = CVSLoader(data_path)
+        data_loader = CVSLoader(data_path, rand_seed=self.rand_seed)
         outside_data_loader = CVSLoader(outside_data_path)
         x_train, y_train, x_test, y_test = data_loader.load_data(
             ["ECFP", "onehot_label"],
@@ -106,6 +108,7 @@ if __name__ == "__main__":
         epochs=args.epochs,
         n_repeat=args.repeat,
         mixup=args.mixup,
-        mixup_repeat=args.mixup_repeat
+        mixup_repeat=args.mixup_repeat,
+        rand_seed=args.rand_seed
     )
     experiment.run_experiment()

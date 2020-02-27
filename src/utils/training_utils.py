@@ -1,8 +1,6 @@
 from datetime import datetime
 import os
 
-from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
-from tensorflow.keras.callbacks import LearningRateScheduler
 import numpy as np
 
 
@@ -21,6 +19,9 @@ def init_model(Model):
 
 
 def callback_list(log_path, es_patience, model):
+    from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
+    from tensorflow.keras.callbacks import LearningRateScheduler
+
     tbcb = TensorBoard(log_path)
     escb = EarlyStopping(
         "val_acc",

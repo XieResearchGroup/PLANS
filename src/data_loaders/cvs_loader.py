@@ -5,18 +5,17 @@ import pandas as pd
 from ._base_loader import _BaseDataLoader
 
 
-random.seed(623890)
-
-
 class CVSLoader(_BaseDataLoader):
 
-    def __init__(self, path, *_, **kwargs):
+    def __init__(self, path, *_, rand_seed=None, **kwargs):
         """
         path: path to the csv file
         kwargs: keyword arguments for the pandas.read_csv function
         """
         super(CVSLoader, self).__init__(path)
         self.kwargs = kwargs
+        if rand_seed is not None:
+            random.seed(rand_seed)
 
     @property
     def data_df(self):

@@ -17,7 +17,7 @@ class BaseEvaluator:
 class TrainingLogEvaluator(BaseEvaluator):
 
     def get_predictions(self):
-        """ Readout the predictions from the log file.
+        r""" Readout the predictions from the log file.
         =======================================================================
         return (list): list of the prediction results in the log file.
         """
@@ -33,3 +33,28 @@ class TrainingLogEvaluator(BaseEvaluator):
                 results.append(result)
             line = self.log_f.readline()
         return results
+
+    @property
+    def _results(self):
+        try:
+            return self._results_
+        except AttributeError:
+            self._results_ = self.get_predictions()
+            return self._results_
+
+    def get_accuracies(self):
+        r""" Calculate accuracy scores from the results.
+        =======================================================================
+        return (list): list of accuracy scores calculated from the results.
+        """
+        accuracies = list()
+        for rst in self._results:
+            counter = 0
+            for pred, truth in rst:
+                if pred == truth:
+                    counter += 1
+            acc = float(counter) / len(rst)
+            accuracies.append(acc)
+        return accuracies
+    
+    

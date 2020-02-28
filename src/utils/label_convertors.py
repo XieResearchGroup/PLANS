@@ -91,6 +91,31 @@ def multivec2onehot(multilabel: np.array):
     ========================================================
     return (np.array): onehot label as numpy array
     """
-    # decide the output shape
     onehot = np.apply_along_axis(vec2onehot, 1, multilabel)
     return onehot
+
+
+def onehot2vec(onehot):
+    r""" Convert a onehot to multilabel vector
+    """
+    # get the positive class index
+    index = np.argmax(onehot)
+    # decide the output length
+    ml_len = len(bin(len(onehot)-1)) - 2
+    # get the str representation of the binarized index
+    bin_index_str = bin(index)[2:]  # remove "0b"
+    # construct the multilabel string
+    vec_str = (ml_len - len(bin_index_str)) * "0" + bin_index_str
+    # convert string to np.array
+    vec = np.array(list(map(int, list(vec_str))))
+    return vec
+
+
+def onehot2multivec(onehotlabel: np.array):
+    r"""Convert onehot to multilabel
+    onehotlabel (np.array): a onehot-label numpy array
+    ========================================================
+    return (np.array): multilabel as numpy array
+    """
+    multivec = np.apply_along_axis(onehot2vec, 1, onehotlabel)
+    return multivec

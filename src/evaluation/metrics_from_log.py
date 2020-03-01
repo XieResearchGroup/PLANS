@@ -1,5 +1,4 @@
 import json
-from itertools import compress
 
 import numpy as np
 import matplotlib.pyplot as plt

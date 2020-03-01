@@ -1,4 +1,8 @@
+import json
+from itertools import compress
+
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_fscore_support
 
 
@@ -25,6 +29,8 @@ class TrainingLogEvaluator(BaseEvaluator):
         =======================================================================
         return (list): list of the prediction results in the log file.
         """
+        # reset file pointer
+        self.log_f.seek(0, 0)
         results = list()
         line = self.log_f.readline()
         while line:
@@ -33,7 +39,7 @@ class TrainingLogEvaluator(BaseEvaluator):
                 line = self.log_f.readline()
                 while not line.startswith("="):
                     result.append(tuple(map(int, line.split())))
-                    line = line = self.log_f.readline()
+                    line = self.log_f.readline()
                 results.append(result)
             line = self.log_f.readline()
         return results
@@ -114,3 +120,67 @@ class TrainingLogEvaluator(BaseEvaluator):
             recalls.append(rc)
             fbetas.append(fbeta)
         return precisions, recalls, fbetas
+
+    def classwise_hits_count_one_result(self, result, classes=32):
+        r""" Count the correct, incorrect and missed predictions.
+        result (list): list of (prediction, truth) pairs
+        classes (int): number of classes
+        =======================================================================
+        return (list, list, list): number of correct, incorrect, and missed
+            counts.
+        """
+        corrects = [0] * classes
+        incorrects = [0] * classes
+        missed = [0] * classes
+        for pred, truth in result:
+            if pred == truth:
+                corrects[truth] += 1
+            else:
+                incorrects[pred] += 1
+                missed[truth] += 1
+        return corrects, incorrects, missed
+
+    def classwise_hits_count(self, classes=32):
+        counts = list()
+        for rst in self._results:
+            counts.append(self.classwise_hits_count_one_result(rst, classes))
+        return counts
+
+    def plot_classwise_prediction_bars(self, index=-1, classes=32, mask=None):
+        r""" Plot bar diagram based on prediction values.
+        index (int): the index of result in the results list. Default is -1.
+        classes (int): classes in the plot. Default is 32.
+        mask (list): list of the booleans to mask the bars. Default is None.
+        """
+        fig, axe = plt.subplots()
+        ind = list(range(classes))
+        counts = self.classwise_hits_count()
+        corrects = counts[index][0]
+        misses = counts[index][2]
+        if mask is not None:
+            for i, m in enumerate(mask):
+                if not m:
+                    corrects[i] = 0
+                    misses[i] = 0
+        axe.bar(ind, corrects, label="Correct")
+        axe.bar(
+            ind, misses, bottom=corrects, label="Missed")
+        axe.legend()
+        axe.set(xlabel="Classes", ylabel="Counts")
+        fig.show()
+
+    def get_best_acc(self, method=max):
+        r""" Get the best validate accuracies from the log file
+        method: Callable used to find the best value in the result list.
+            Default is max.
+        """
+        self.log_f.seek(0, 0)
+        line = self.log_f.readline()
+        while not line.startswith("best accuracies"):  # Find the results
+            line = self.log_f.readline()
+        line = self.log_f.readline()  # Read the results
+        accuracies = json.loads(line.replace("'", '"'))
+        bests = dict()
+        for k, v in accuracies.items():
+            bests[k] = method(v)
+        return bests

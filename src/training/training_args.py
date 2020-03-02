@@ -53,10 +53,10 @@ class LMMixupArgs(LinearModelTrainingArgs):
 
     def __init__(self):
         super(LMMixupArgs, self).__init__()
-        self.add_argument("--mixup", default=0.4, type=float,
+        self.add_argument("--mixup", default=None, type=float,
                           help="The coefficient of the Beta distribution "
                           "in mixup.")
-        self.add_argument("--mixup-repeat", default=5, type=int,
+        self.add_argument("--mixup-repeat", default=None, type=int,
                           help="Times to repeat the dataset when apply mixup.")
 
 

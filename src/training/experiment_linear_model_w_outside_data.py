@@ -143,8 +143,8 @@ def main(data_path,
     best_loss[str(trained_model)] = min_loss
     best_acc[str(trained_model)] = max_acc
 
-    log_f.write("best losses {}\n".format(str(best_loss)))
-    log_f.write("best accuracies {}\n".format(str(best_acc)))
+    log_f.write("best losses\n {}\n".format(str(best_loss)))
+    log_f.write("best accuracies\n {}\n".format(str(best_acc)))
 
     log_f.close()
 

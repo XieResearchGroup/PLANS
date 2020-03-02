@@ -19,6 +19,7 @@ class ExperimentBase:
                  batch_size,
                  epochs,
                  n_repeat,
+                 rand_seed,
                  mixup=None,
                  mixup_repeat=None):
         self.data_path = data_path
@@ -27,6 +28,7 @@ class ExperimentBase:
         self.batch_size = batch_size
         self.epochs = epochs
         self.n_repeat = n_repeat
+        self.rand_seed = rand_seed
         self.mixup = mixup
         self.mixup_repeat = mixup_repeat
         self.best_loss = dict()

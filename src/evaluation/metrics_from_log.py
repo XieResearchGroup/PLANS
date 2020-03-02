@@ -1,4 +1,5 @@
 import json
+import statistics as stat
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -145,7 +146,12 @@ class TrainingLogEvaluator(BaseEvaluator):
             counts.append(self.classwise_hits_count_one_result(rst, classes))
         return counts
 
-    def plot_classwise_prediction_bars(self, index=-1, classes=32, mask=None):
+    def plot_classwise_prediction_bars(self,
+                                       ylim=None,
+                                       index=-1,
+                                       classes=32,
+                                       mask=None,
+                                       save_name=None):
         r""" Plot bar diagram based on prediction values.
         index (int): the index of result in the results list. Default is -1.
         classes (int): classes in the plot. Default is 32.
@@ -165,7 +171,39 @@ class TrainingLogEvaluator(BaseEvaluator):
         axe.bar(
             ind, misses, bottom=corrects, label="Missed")
         axe.legend()
-        axe.set(xlabel="Classes", ylabel="Counts")
+        axe.set(xlabel="Classes", ylabel="Counts", ylim=ylim)
+        if save_name is not None:
+            fig.savefig(save_name, dpi=300)
+        fig.show()
+
+    def plot_classwise_correct_and_incorrect_bars(self,
+                                                  ylim=None,
+                                                  index=-1,
+                                                  classes=32,
+                                                  mask=None,
+                                                  save_name=None):
+        r""" Plot bar diagram based on correct and incorrect predicted values.
+        index (int): the index of result in the results list. Default is -1.
+        classes (int): classes in the plot. Default is 32.
+        mask (list): list of the booleans to mask the bars. Default is None.
+        """
+        fig, axe = plt.subplots()
+        ind = list(range(classes))
+        counts = self.classwise_hits_count()
+        corrects = counts[index][0]
+        incorrects = counts[index][1]
+        if mask is not None:
+            for i, m in enumerate(mask):
+                if not m:
+                    corrects[i] = 0
+                    incorrects[i] = 0
+        axe.bar(ind, corrects, label="Correct")
+        axe.bar(
+            ind, incorrects, bottom=corrects, label="Incorrect", color="red")
+        axe.legend()
+        axe.set(xlabel="Classes", ylabel="Counts", ylim=ylim)
+        if save_name is not None:
+            fig.savefig(save_name, dpi=300)
         fig.show()
 
     def get_best_acc(self, method=max):
@@ -183,3 +221,65 @@ class TrainingLogEvaluator(BaseEvaluator):
         for k, v in accuracies.items():
             bests[k] = method(v)
         return bests
+
+
+class BaseCalculator:
+
+    def __init__(self, evaluators, output_path, mode="w"):
+        self.evaluators = evaluators
+        self.output_f = open(output_path, mode, encoding="utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.output_f.close()
+
+    def __del__(self):
+        if not self.output_f.closed:
+            self.output_f.close()
+
+
+class LogStatisticsCalculator(BaseCalculator):
+    r""" Statistics from logs
+    """
+
+    def _mean_and_stdev(self, data):
+        mean = stat.mean(data)
+        stdev = stat.stdev(data)
+        return (mean, stdev)
+
+    def _cal_stat(self):
+        accuracies = list()
+        precisions = list()
+        recalls = list()
+        f1_scores = list()
+        for eva in self.evaluators:
+            best_index = np.argmax(eva.accuracy_scores())
+            accuracies.append(eva.accuracy_scores()[best_index])
+            prec, rec, f1 = eva.precision_recall_fbeta_scores()
+            precisions.append(prec[best_index])
+            recalls.append(rec[best_index])
+            f1_scores.append(f1[best_index])
+        acc_stat = self._mean_and_stdev(accuracies)
+        # convert accuracy to percentage representation
+        acc_stat = [num * 100 for num in acc_stat]
+        prec_stat = self._mean_and_stdev(precisions)
+        rec_stat = self._mean_and_stdev(recalls)
+        f1_stat = self._mean_and_stdev(f1_scores)
+        return [acc_stat, prec_stat, rec_stat, f1_stat]
+
+    @property
+    def statistics_(self):
+        try:
+            return self._statistics_
+        except AttributeError:
+            self._statistics_ = self._cal_stat()
+            return self._statistics_
+
+    def statistics_str(self):
+        stat_str = "Accuracy\tPrecision\tRecall\tF1\n"
+        for stats in self.statistics_:
+            stat_str += "{:.2f} ± {:.2f}\t".format(stats[0], stats[1])
+        print(stat_str)
+        self.output_f.write(stat_str + "\n")

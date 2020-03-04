@@ -43,6 +43,9 @@ def fill_unlabeled(predictions,
     predictions (numpy.array): predicted labels, shape is (?, 5)
     data_unlabeled (numpy.array): str, unlabeled data in "1_10_"-like format
     hard_label (bool): use hard label to label the unlabeled data
+    normalize (bool): if to normalize predictions before filling into
+        unlabeled. When normalize is True, predictions cannot be a single
+        value, and hard_label must be False.
     ========================================================================
     return: numpy.array
     """

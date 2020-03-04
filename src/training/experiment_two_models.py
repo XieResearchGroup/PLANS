@@ -97,8 +97,8 @@ class ExperimentTwoModels(ExperimentBase):
         combined_pred = self._combine_predictions(binary_pred, multi_pred)
         y_true = np.argmax(y_onehot_test, axis=1)
         log_f.write("@final_evaluation\n")
-        for pred, true, two_class in zip(combined_pred, y_true, y_2class_test):
-            log_f.write(str(pred)+" "+str(true)+" "+str(two_class)+"\n")
+        for pred, true in zip(combined_pred, y_true):
+            log_f.write(str(pred)+" "+str(true)+"\n")
         log_f.write("="*80+"\n")
 
         acc_score = accuracy_score(y_true, combined_pred)

@@ -149,6 +149,11 @@ def partial2onehot(label):
     # decide the one-hot lable lenth
     len_oh = 2 ** len(label)
     oh = ["0"] * len_oh
+    # no missing labels
+    if n_miss == 0:
+        oh[int(label, 2)] = "1"
+        return "".join(oh)
+    # fill missing positions with "_"
     for i in product([0, 1], repeat=n_miss):
         binary = _fill_missing(label, i)
         index = int(binary, 2)

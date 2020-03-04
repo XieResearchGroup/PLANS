@@ -1,7 +1,7 @@
 for i in {1..5}
 do
     CUDA_VISIBLE_DEVICES=$1 \
-    python -m src.training.experiment_two_models \
+    python -m src.training.experiment_linear_two_models \
     -p ./data/fromraw_cid_inchi_smiles_fp_labels_onehots_twoclass.csv \
     -e 1000 \
     -b 256 \

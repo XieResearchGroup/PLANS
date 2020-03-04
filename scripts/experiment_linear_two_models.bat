@@ -1,4 +1,4 @@
-python -m src.training.experiment_two_models ^
+python -m src.training.experiment_linear_two_models ^
 -p .\data\fromraw_cid_inchi_smiles_fp_labels_onehots_twoclass.csv ^
 -e 200 ^
 -b 128 ^

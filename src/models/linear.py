@@ -36,11 +36,11 @@ class Linear_S(Model):
 
     def scheduler(self, epoch):
         if epoch < 20:
-            return 0.00001
-        elif epoch < 40:
             return 1e-6
-        else:
+        elif epoch < 40:
             return 1e-7
+        else:
+            return 1e-8
 
     def __str__(self):
         return "Linear_S"

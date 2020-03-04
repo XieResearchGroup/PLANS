@@ -35,7 +35,10 @@ def convert2hier(label, dtype):
     return label.astype(dtype)
 
 
-def fill_unlabeled(predictions, data_unlabeled, hard_label=False):
+def fill_unlabeled(predictions,
+                   data_unlabeled,
+                   hard_label=False,
+                   normalize=False):
     """ Fill the unlabeled blanks in data_unlabeled with predicted labels
     predictions (numpy.array): predicted labels, shape is (?, 5)
     data_unlabeled (numpy.array): str, unlabeled data in "1_10_"-like format
@@ -44,23 +47,42 @@ def fill_unlabeled(predictions, data_unlabeled, hard_label=False):
     return: numpy.array
     """
     data_labeled = np.zeros((len(data_unlabeled), len(data_unlabeled[0])))
-    for i, data in enumerate(data_unlabeled):
-        labeled = list(data)
-        for j, label in enumerate(labeled):
-            try:
-                labeled[j] = int(label)
-            except ValueError:
-                if hard_label:
-                    if isinstance(predictions, (int, float)):
-                        labeled[j] = round(predictions)
+    if normalize:
+        for i, data in enumerate(data_unlabeled):
+            missing_values = list()
+            labeled = list(data)
+            for j, label in enumerate(labeled):
+                try:
+                    labeled[j] = int(label)
+                except ValueError:
+                    missing_values.append(predictions[i, j])
+            missing_values = [v / sum(missing_values) for v in missing_values]
+            flag = 0
+            for k, label in enumerate(labeled):
+                try:
+                    int(label)
+                except ValueError:
+                    labeled[k] = missing_values[flag]
+                    flag += 1
+            data_labeled[i] = labeled
+    else:
+        for i, data in enumerate(data_unlabeled):
+            labeled = list(data)
+            for j, label in enumerate(labeled):
+                try:
+                    labeled[j] = int(label)
+                except ValueError:
+                    if hard_label:
+                        if isinstance(predictions, (int, float)):
+                            labeled[j] = round(predictions)
+                        else:
+                            labeled[j] = round(predictions[i, j])
                     else:
-                        labeled[j] = round(predictions[i, j])
-                else:
-                    if isinstance(predictions, (int, float)):
-                        labeled[j] = predictions
-                    else:
-                        labeled[j] = predictions[i, j]
-        data_labeled[i] = labeled
+                        if isinstance(predictions, (int, float)):
+                            labeled[j] = predictions
+                        else:
+                            labeled[j] = predictions[i, j]
+            data_labeled[i] = labeled
     return data_labeled
 
 

@@ -3,6 +3,7 @@ from functools import partial
 from ..models.linear import Linear_S, Linear_M, Linear_L
 from .train_model import ns_linear_teacher_model, ns_linear_student_model
 from .train_model import predict_and_mix, plot_history
+from .training_args import LMMixupArgs
 from ..data_loaders.cvs_loader import CVSLoader
 from ..utils.label_convertors import convert2vec
 from ..utils.mixup import mixup
@@ -39,8 +40,8 @@ class ExperimentBase:
             self.mixup, self.mixup, x, y, repeat=self.mixup_repeat)
         return x_mix, y_mix
 
-    def load_data(self, data_path):
-        data_loader = CVSLoader(data_path)
+    def load_data(self):
+        data_loader = CVSLoader(self.data_path)
         x_train, y_train, x_test, y_test = data_loader.load_data(
             ["ECFP", "onehot_label"],
             ratio=0.7,
@@ -140,8 +141,7 @@ class ExperimentBase:
 
     def run_experiment(self):
         # load training and testing data
-        x_train, y_train, x_test, y_test, x_unlabeled = self.load_data(
-            self.data_path)
+        x_train, y_train, x_test, y_test, x_unlabeled = self.load_data()
         # open log
         log_f, log_path = self.open_log_(self.log_path)
         # train the teacher model
@@ -182,3 +182,20 @@ class ExperimentBase:
         log_f.write("best losses:\n {}\n".format(str(self.best_loss)))
         log_f.write("best accuracies:\n {}\n".format(str(self.best_acc)))
         log_f.close()
+
+
+if __name__ == "__main__":
+    parser = LMMixupArgs()
+    args = parser.parse_args()
+    experiment = ExperimentBase(
+        data_path=args.data_path,
+        log_path=args.log_path,
+        es_patience=args.es_patience,
+        batch_size=args.batch_size,
+        epochs=args.epochs,
+        n_repeat=args.repeat,
+        mixup=args.mixup,
+        mixup_repeat=args.mixup_repeat,
+        rand_seed=args.rand_seed
+    )
+    experiment.run_experiment()

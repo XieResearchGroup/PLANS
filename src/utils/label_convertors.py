@@ -1,3 +1,5 @@
+from itertools import product
+
 import numpy as np
 
 
@@ -119,3 +121,36 @@ def onehot2multivec(onehotlabel: np.array):
     """
     multivec = np.apply_along_axis(onehot2vec, 1, onehotlabel)
     return multivec
+
+
+def _fill_missing(label: str, digits: tuple) -> str:
+    r""" Helper that fill the label with digits
+    """
+    i, j = 0, 0
+    label = list(label)
+    while j < len(digits):
+        digit = digits[j]
+        while label[i] != "_":
+            i += 1
+        label[i] = str(digit)
+        j += 1
+    return "".join(label)
+
+
+def partial2onehot(label):
+    r""" Convert a partial multi label to its potential one hot label. e.g.
+        "10_" -> "100" or "101" -> "0000__00"
+    label (str): a multilabel with or without missing label(s)
+    ===========================================================================
+    return (str): the corresponding potential one-hot label
+    """
+    # count number of missing lables
+    n_miss = label.count("_")
+    # decide the one-hot lable lenth
+    len_oh = 2 ** len(label)
+    oh = ["0"] * len_oh
+    for i in product([0, 1], repeat=n_miss):
+        binary = _fill_missing(label, i)
+        index = int(binary, 2)
+        oh[index] = "_"
+    return "".join(oh)

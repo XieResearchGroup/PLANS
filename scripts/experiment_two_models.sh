@@ -1,4 +1,4 @@
-for i in {1..5}:
+for i in {1..5}
 do
     CUDA_VISIBLE_DEVICES=$1 \
     python -m src.training.experiment_two_models \

@@ -29,13 +29,13 @@ class CVSLoader(_BaseDataLoader):
             self._data_df = pd.read_csv(self.path, **self.kwargs)
             return self._data_df
 
-    def _split(self, ratio, shuffle, nl_symbol):
+    def _split(self, col, ratio, shuffle, nl_symbol):
         try:
             index = self.data_df.loc[
-                ~self.data_df[self._cols[1]].str.contains(nl_symbol)].index
+                ~self.data_df[col].str.contains(nl_symbol)].index
         except (AttributeError, TypeError, ValueError):
             index = self.data_df.loc[
-                self.data_df[self._cols[1]].notna()].index
+                self.data_df[col].notna()].index
         index = index.to_list()
         if shuffle:
             random.shuffle(index)
@@ -54,12 +54,24 @@ class CVSLoader(_BaseDataLoader):
         return:
         data (list): [x_train, y_train, x_test, y_test]
         """
-        self._cols = cols
-        data_rows = self._split(ratio, shuffle, nl_symbol)
+        data_rows = self._split(cols[1], ratio, shuffle, nl_symbol)
         data = list()
         for rows, col in itertools.product(data_rows, cols):
             data.append(self.data_df.loc[rows, col].to_numpy())
         return data
+
+    # def load_data_multilabels(self,
+    #                           training_col,
+    #                           label_cols,
+    #                           ratio,
+    #                           shuffle=True,
+    #                           nl_symbol="_"):
+    #     data_rows = self._split(label_cols[0], ratio, shuffle, nl_symbol)
+    #     data = list()
+    #     cols = [training_col] + label_cols
+    #     for rows, col in itertools.product[data_rows, cols]:
+    #         data.append(self.data_df.loc[rows, col].to_numpy())
+    #     return data
 
     def load_unlabeled(self, cols, nl_symbol="_"):
         """ Load the unlabeled data.

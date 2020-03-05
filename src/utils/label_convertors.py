@@ -40,7 +40,7 @@ def fill_unlabeled(predictions,
                    hard_label=False,
                    normalize=False):
     """ Fill the unlabeled blanks in data_unlabeled with predicted labels
-    predictions (numpy.array): predicted labels, shape is (?, 5)
+    predictions (numpy.array): predicted labels, shape is (n_samples, n_labels)
     data_unlabeled (numpy.array): str, unlabeled data in "1_10_"-like format
     hard_label (bool): use hard label to label the unlabeled data
     normalize (bool): if to normalize predictions before filling into
@@ -49,7 +49,7 @@ def fill_unlabeled(predictions,
     ========================================================================
     return: numpy.array
     """
-    data_labeled = np.zeros((len(data_unlabeled), len(data_unlabeled[0])))
+    data_labeled = np.zeros(predictions.shape)
     if normalize:
         for i, data in enumerate(data_unlabeled):
             missing_values = list()

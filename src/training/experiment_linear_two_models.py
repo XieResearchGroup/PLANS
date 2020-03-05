@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score
 from .experiment_base import ExperimentBase
 from .training_args import LMMixupArgs
 from ..data_loaders.cvs_loader import CVSLoader
-from ..models.linear import Linear_S
+from ..models.linear import Linear_S, Linear_M
 from ..utils.label_convertors import convert2vec
 
 
@@ -74,7 +74,7 @@ class ExperimentTwoModels(ExperimentBase):
 
         # train the other classes model
         print("Training multi-class model...")
-        multi_class_model = partial(Linear_S, out_len=31)
+        multi_class_model = partial(Linear_M, out_len=31)
         trained_onehot_model, histories = self.train_teacher(
             model=multi_class_model,
             x_train=x_onehot_train,

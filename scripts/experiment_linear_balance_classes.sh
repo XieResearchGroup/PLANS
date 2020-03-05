@@ -7,7 +7,7 @@ do
     -e 1000 \
     -b 256 \
     --es-patience 20 \
-    --log-path ./logs/linear/drugbank_mixup \
+    --log-path ./logs/linear/balance \
     --repeat 5 \
     --rand-seed $i
 done

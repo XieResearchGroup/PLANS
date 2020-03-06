@@ -18,7 +18,7 @@ class BaseEvaluator:
         self.log_f.close()
 
     def __del__(self):
-        if not self.log_f.closed:
+        if hasattr(self, "log_f") and not self.log_f.closed:
             self.log_f.close()
 
 
@@ -151,7 +151,8 @@ class TrainingLogEvaluator(BaseEvaluator):
                                        index=-1,
                                        classes=32,
                                        mask=None,
-                                       save_name=None):
+                                       save_name=None,
+                                       show=True):
         r""" Plot bar diagram based on prediction values.
         index (int): the index of result in the results list. Default is -1.
         classes (int): classes in the plot. Default is 32.
@@ -174,14 +175,16 @@ class TrainingLogEvaluator(BaseEvaluator):
         axe.set(xlabel="Classes", ylabel="Counts", ylim=ylim)
         if save_name is not None:
             fig.savefig(save_name, dpi=300)
-        fig.show()
+        if show:
+            fig.show()
 
     def plot_classwise_correct_and_incorrect_bars(self,
                                                   ylim=None,
                                                   index=-1,
                                                   classes=32,
                                                   mask=None,
-                                                  save_name=None):
+                                                  save_name=None,
+                                                  show=True):
         r""" Plot bar diagram based on correct and incorrect predicted values.
         index (int): the index of result in the results list. Default is -1.
         classes (int): classes in the plot. Default is 32.
@@ -204,7 +207,8 @@ class TrainingLogEvaluator(BaseEvaluator):
         axe.set(xlabel="Classes", ylabel="Counts", ylim=ylim)
         if save_name is not None:
             fig.savefig(save_name, dpi=300)
-        fig.show()
+        if show:
+            fig.show()
 
     def get_best_acc(self, method=max):
         r""" Get the best validate accuracies from the log file
@@ -236,7 +240,7 @@ class BaseCalculator:
         self.output_f.close()
 
     def __del__(self):
-        if not self.output_f.closed:
+        if hasattr(self, "log_f") and not self.output_f.closed:
             self.output_f.close()
 
 

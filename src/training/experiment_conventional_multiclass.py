@@ -14,6 +14,8 @@ from .training_args import ConventionalArgs
 
 
 def init_data(data_path, rand_seed):
+    r""" Load data and convert labels from onehot to integers.
+    """
     data_loader = CVSLoader(data_path, rand_seed=rand_seed)
     x_train, y_train, x_test, y_test = data_loader.load_data(
         ["ECFP", "onehot_label"],
@@ -29,14 +31,22 @@ def init_data(data_path, rand_seed):
 
 
 def experiment(data_path, model, log_path, rand_seed):
+    r""" Run experiment
+    """
     x_train, y_train, x_test, y_test = init_data(data_path, rand_seed)
     model.fit(x_train, y_train)
     y_pred = model.predict(x_test)
     acc = accuracy_score(y_pred, y_test)
+    # Logging the experiment results
     log_f, log_path = open_log(log_path)
     log_f.write(
         "Experiment with {}. Accuracy is: {}\n".format(
             type(model).__name__, acc))
+    # Write prediction and true label
+    log_f.write("@prediction-truth\n")
+    for p, t in zip(y_test, y_pred):
+        log_f.write(str(p)+" "+str(t)+"\n")
+    log_f.write("="*80+"\n")
     log_f.close()
     return acc, model
 

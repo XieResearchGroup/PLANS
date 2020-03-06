@@ -1,3 +1,4 @@
+import os
 from functools import partial
 
 from sklearn.ensemble import RandomForestClassifier
@@ -44,7 +45,7 @@ def experiment(data_path, model, log_path, rand_seed):
             type(model).__name__, acc))
     # Write prediction and true label
     log_f.write("@prediction-truth\n")
-    for p, t in zip(y_test, y_pred):
+    for p, t in zip(y_pred, y_test):
         log_f.write(str(p)+" "+str(t)+"\n")
     log_f.write("="*80+"\n")
     log_f.close()
@@ -87,9 +88,43 @@ def experiment_svm(data_path, log_path, rand_seed=None):
     return acc, model
 
 
-if __name__ == "__main__":
-    import os
+def experiment_xgboost(data_path,
+                       log_path,
+                       max_depth,
+                       num_class=32,
+                       n_round=2,
+                       rand_seed=None):
+    import xgboost as xgb
 
+    # init data
+    x_train, y_train, x_test, y_test = init_data(data_path, rand_seed)
+    dtrain = xgb.DMatrix(x_train, label=y_train)
+    dtest = xgb.DMatrix(x_test, label=y_test)
+    # setup parameters
+    param = {}
+    param['objective'] = 'multi:softmax'
+    param['eta'] = 0.1
+    param['max_depth'] = max_depth
+    param['silent'] = 1
+    param['nthread'] = int(os.cpu_count()/2)
+    param['num_class'] = num_class
+    bst = xgb.train(param, dtrain, n_round)
+    preds = bst.predict(dtest).astype(int)
+    acc = accuracy_score(preds, y_test)
+    # Logging the experiment results
+    log_f, log_path = open_log(log_path)
+    log_f.write(
+        "Experiment with xgboost. Accuracy is: {}\n".format(acc))
+    # Write prediction and true label
+    log_f.write("@prediction-truth\n")
+    for p, t in zip(preds, y_test):
+        log_f.write(str(p)+" "+str(t)+"\n")
+    log_f.write("="*80+"\n")
+    log_f.close()
+    return acc, bst
+
+
+if __name__ == "__main__":
     parser = ConventionalArgs()
     args = parser.parse_args()
     experiment_rf(args.data_path,
@@ -107,3 +142,8 @@ if __name__ == "__main__":
     experiment_svm(args.data_path,
                    os.path.join(args.log_path, "svm"),
                    args.rand_seed)
+
+    experiment_xgboost(args.data_path,
+                       os.path.join(args.log_path, "xgboost"),
+                       args.max_depth,
+                       rand_seed=args.rand_seed)

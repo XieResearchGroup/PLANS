@@ -8,6 +8,7 @@ do
     --es-patience 20 \
     --log-path ./logs/linear/MLP_only/no_mixup \
     --repeat 0 \
+    --rand-seed $i
 done
 
 for i in {1..5}
@@ -21,5 +22,6 @@ do
     --log-path ./logs/linear/MLP_only/mixup \
     --repeat 0 \
     --mixup 0.4 \
-    --mixup-repeat 10
+    --mixup-repeat 10 \
+    --rand-seed $i
 done

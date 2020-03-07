@@ -9,7 +9,7 @@ class ExperimentLinear(ExperimentBase):
 
     def run_experiment(self):
         # load training and testing data
-        x_train, y_train, x_test, y_test, _ = self.load_data()
+        x_train, y_train, x_test, y_test, x_unlabeled = self.load_data()
         # open log
         log_f, log_path = self.open_log_(self.log_path)
         # train the teacher model without repeat
@@ -19,6 +19,9 @@ class ExperimentLinear(ExperimentBase):
             y_train=y_train,
             x_test=x_test,
             y_test=y_test,
+            x_pred=x_unlabeled,
+            batch_size=self.batch_size,
+            epochs=self.epochs,
             log_f=log_f,
             log_path=log_path,
             n_repeat=self.n_repeat

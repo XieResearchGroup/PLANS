@@ -57,7 +57,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="Path to the log folder.")
-    parser.add_argument("-s", "--show", default=False,
+    parser.add_argument("-s", "--show", action="store_true",
                         help="Show the plottings.")
     args = parser.parse_args()
     plot_analysis(args.path, args.show)

@@ -88,7 +88,7 @@ class ExperimentLinearBalanced(ExperimentBase):
         x (np.arrapy): training set data
         y (np.array): training set label
         shuffle (bool): if shuffle after mixing the training and predicted data
-        ===========================================================================
+        =======================================================================
         return:
         x_mix: mixed training data
         y_mix: mixed lables (soft)
@@ -217,7 +217,7 @@ class ExperimentLinearBalanced(ExperimentBase):
         log_f: logging file handler
         log_path: path to the logging directory
         n_repeat: times to train the model
-        ===========================================================================
+        =======================================================================
         return: the trained model, training histories
         """
         x_mix, y_mix, _, _ = self._predict_and_balance(teacher_model,

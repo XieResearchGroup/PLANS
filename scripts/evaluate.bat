@@ -1,0 +1,1 @@
+python -m src.evaluation.evaluate -p %1

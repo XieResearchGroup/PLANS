@@ -92,7 +92,7 @@ def experiment_xgboost(data_path,
                        log_path,
                        max_depth,
                        num_class=32,
-                       n_round=2,
+                       n_round=17,
                        rand_seed=None):
     import xgboost as xgb
 

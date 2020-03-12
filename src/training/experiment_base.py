@@ -1,7 +1,6 @@
 from functools import partial
 
 from ..models.linear import Linear_S, Linear_M, Linear_L
-from .train_model import ns_linear_teacher_model, ns_linear_student_model
 from .train_model import predict_and_mix, plot_history
 from .training_args import LMMixupArgs
 from ..data_loaders.cvs_loader import CVSLoader
@@ -9,6 +8,7 @@ from ..utils.label_convertors import convert2vec
 from ..utils.mixup import mixup
 from ..utils.training_utils import init_model, callback_list, open_log
 from ..utils.training_utils import find_best
+from ..utils.training_utils import training_log
 
 
 class ExperimentBase:
@@ -70,23 +70,68 @@ class ExperimentBase:
                       log_f,
                       log_path,
                       n_repeat):
+        r""" Train linear model with Noisy Student
+        model: the model to be trained
+        x_train: training data
+        y_train: labels of the training data
+        x_test: testing data
+        y_test: testing data labels
+        x_pred: unlabeled training data
+        batch_size: size of mini batches
+        epochs: number of epochs
+        log_f: logging file handler
+        log_path: path to the logging directory
+        n_repeat: times to train the model
+        =======================================================================
+        return: the trained model, training history
+        """
         model = init_model(model)
         cb_list = callback_list(log_path, self.es_patience, model)
-        trained_model, histories = ns_linear_teacher_model(
-            model=model,
-            x_train=x_train,
-            y_train=y_train,
-            x_test=x_test,
-            y_test=y_test,
-            x_pred=x_pred,
+        histories = list()
+        log_f.write("training {}:\n".format(str(model)))
+        train_his = model.fit(
+            x=x_train,
+            y=y_train,
             batch_size=batch_size,
             epochs=epochs,
-            cb_list=cb_list,
-            log_f=log_f,
-            log_path=log_path,
-            n_repeat=n_repeat
+            callbacks=cb_list,
+            validation_data=[x_test, y_test]
         )
-        return trained_model, histories
+        histories.append(train_his)
+
+        y_pred = model.predict(x_test)
+        training_log(train_his, y_pred, y_test, log_f)
+
+        # repeat training the model
+        for i in range(n_repeat):
+            log_f.write(
+                "repeat training {}, {}/{}:\n".format(
+                    str(model), i+1, n_repeat))
+            # label unlabled
+            x_mix, y_mix = predict_and_mix(
+                model=model,
+                x_pred=x_pred,
+                x=x_train,
+                y=y_train,
+                shuffle=True
+            )
+            if self.mixup is not None:
+                x_mix, y_mix = self._mixup(x_mix, y_mix)
+            # train model with the mixed data
+            train_his = model.fit(
+                x=x_mix,
+                y=y_mix,
+                batch_size=batch_size,
+                epochs=epochs,
+                callbacks=cb_list,
+                validation_data=[x_test, y_test]
+            )
+            histories.append(train_his)
+            # log training history
+            y_pred = model.predict(x_test)
+            training_log(train_his, y_pred, y_test, log_f)
+
+        return model, histories
 
     def train_student(self,
                       student_model,
@@ -101,6 +146,23 @@ class ExperimentBase:
                       log_f,
                       log_path,
                       n_repeat):
+        r""" Train student linear model with Noisy Student
+        student_model: the model to be trained
+        teacher_model: the trained model for generating the first batch of
+                       predictions
+        x_train: training data
+        y_train: labels of the training data
+        x_test: testing data
+        y_test: testing data label
+        x_pred: unlabeled training data
+        batch_size: size of mini batches
+        epochs: number of epochs
+        log_f: logging file handler
+        log_path: path to the logging directory
+        n_repeat: times to train the model
+        =======================================================================
+        return: the trained model, training history
+        """
         x_mix, y_mix = predict_and_mix(teacher_model,
                                        x_pred,
                                        x_train,
@@ -111,24 +173,51 @@ class ExperimentBase:
         model = init_model(student_model)
         # callbacks
         cb_list = callback_list(log_path, self.es_patience, model)
-        # fit Linear_M model to mixed dataset
-        trained_model, histories = ns_linear_student_model(
-            model=model,
-            x_train=x_train,
-            y_train=y_train,
-            x_mix=x_mix,
-            y_mix=y_mix,
-            x_test=x_test,
-            y_test=y_test,
-            x_pred=x_pred,
+        histories = list()
+        log_f.write("training {}:\n".format(str(model)))
+        train_his = model.fit(
+            x=x_mix,
+            y=y_mix,
             batch_size=batch_size,
             epochs=epochs,
-            cb_list=cb_list,
-            log_f=log_f,
-            log_path=log_path,
-            n_repeat=n_repeat
+            callbacks=cb_list,
+            validation_data=[x_test, y_test]
         )
-        return trained_model, histories
+        histories.append(train_his)
+
+        y_pred = model.predict(x_test)
+        training_log(train_his, y_pred, y_test, log_f)
+
+        # repeat training the model
+        for i in range(n_repeat):
+            log_f.write(
+                "repeat training {}, {}/{}:\n".format(
+                    str(model), i+1, n_repeat))
+            # label unlabled
+            x_mix, y_mix = predict_and_mix(
+                model=model,
+                x_pred=x_pred,
+                x=x_train,
+                y=y_train,
+                shuffle=True
+            )
+            if self.mixup is not None:
+                x_mix, y_mix = self._mixup(x_mix, y_mix)
+            # train model with the mixed data
+            train_his = model.fit(
+                x=x_mix,
+                y=y_mix,
+                batch_size=batch_size,
+                epochs=epochs,
+                callbacks=cb_list,
+                validation_data=[x_test, y_test]
+            )
+            histories.append(train_his)
+            # log training history
+            y_pred = model.predict(x_test)
+            training_log(train_his, y_pred, y_test, log_f)
+
+        return model, histories
 
     def log_training(self, trained_model, histories, log_path):
         # plot the training history

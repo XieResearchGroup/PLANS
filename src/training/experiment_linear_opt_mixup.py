@@ -47,8 +47,6 @@ class ExperimentLinearOptMixup(ExperimentBase):
 
         # sample lambda from beta distribution
         lamb = np.random.beta(coef, coef, (samp1.shape[0], 1))
-        print("lamb shape: {}".format(lamb.shape))
-
         # mixup samples
         sample = lamb * samp1 + (1-lamb) * samp
         label = lamb * label1 + (1-lamb) * label

@@ -1,5 +1,6 @@
 # ignore large datasets
 data/ChEMBL24*
+data/backup
 
 # papers
 papers/

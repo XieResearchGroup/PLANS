@@ -3,7 +3,7 @@ import statistics as stat
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
 
 class BaseEvaluator:
@@ -120,6 +120,17 @@ class TrainingLogEvaluator(BaseEvaluator):
             recalls.append(rc)
             fbetas.append(fbeta)
         return precisions, recalls, fbetas
+
+    def roc_auc(self, classes=5, average="micro"):
+        r""" Calculate ROC-AUC from the results
+        =======================================================================
+        return (list)): ROC-AUC scores
+        """
+        scores = list()
+        for rst in self._results2multilabel(classes):
+            score = roc_auc_score(rst[0], rst[1], average=average)
+            scores.append(score)
+        return scores
 
     def classwise_hits_count_one_result(self, result, classes=32):
         r""" Count the correct, incorrect and missed predictions.
@@ -258,6 +269,7 @@ class LogStatisticsCalculator(BaseCalculator):
         precisions = list()
         recalls = list()
         f1_scores = list()
+        auc_scores = list()
         for eva in self.evaluators:
             best_index = np.argmax(eva.accuracy_scores())
             accuracies.append(eva.accuracy_scores()[best_index])
@@ -265,13 +277,15 @@ class LogStatisticsCalculator(BaseCalculator):
             precisions.append(prec[best_index])
             recalls.append(rec[best_index])
             f1_scores.append(f1[best_index])
+            auc_scores.append(eva.roc_auc()[best_index])
         acc_stat = self._mean_and_stdev(accuracies)
         # convert accuracy to percentage representation
         acc_stat = [num * 100 for num in acc_stat]
         prec_stat = self._mean_and_stdev(precisions)
         rec_stat = self._mean_and_stdev(recalls)
         f1_stat = self._mean_and_stdev(f1_scores)
-        return [acc_stat, prec_stat, rec_stat, f1_stat]
+        auc_stat = self._mean_and_stdev(auc_scores)
+        return [acc_stat, prec_stat, rec_stat, f1_stat, auc_stat]
 
     @property
     def statistics_(self):
@@ -282,7 +296,7 @@ class LogStatisticsCalculator(BaseCalculator):
             return self._statistics_
 
     def statistics_str(self):
-        stat_str = "Accuracy\tPrecision\tRecall\tF1\n"
+        stat_str = "Accuracy\tPrecision\tRecall\tF1\tAUC\n"
         for stats in self.statistics_:
             stat_str += "{:.2f} ± {:.2f}\t".format(stats[0], stats[1])
         print(stat_str)

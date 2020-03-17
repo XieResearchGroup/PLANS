@@ -8,10 +8,20 @@ class HDF5Loader(File):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__field = None
+        self.__fields = None
         self.__index = 0
 
-    def set_dataset(self, key, shuffle=False, infinite=False):
+    def _assert_valid(self, keys):
+        # assert keys is not empty
+        assert len(keys) > 0
+        if len(keys) == 1:
+            return
+        # assert the datasets have the same amount of samples
+        length = self[keys[0]].shape[0]
+        for key in keys[1:]:
+            assert self[key].shape[0] == length
+
+    def set_dataset(self, *keys, shuffle=False, infinite=False):
         r""" Set the default dataset.
         key (str): the dataset path in the hdf5 file
         shuffle (bool): whether to shuffle the dataset
@@ -20,15 +30,16 @@ class HDF5Loader(File):
 
         return: None
         """
-        self.__field = key
-        self.__indices = list(range(self[key].shape[0]))
+        self._assert_valid(keys)
+        self.__fields = keys
+        self.__indices = list(range(self[keys[0]].shape[0]))
         self.__shuffle = shuffle
         self.__infinite = infinite
         if shuffle:
             random.shuffle(self.__indices)
 
     def _check_field(self):
-        if self.__field is None:
+        if self.__fields is None:
             raise AttributeError("Set the dataset to iter from first by "
                                  "calling self.set_dataset() method.")
 
@@ -37,7 +48,8 @@ class HDF5Loader(File):
         return self
 
     def _get_value(self):
-        value = self[self.__field][self.__indices[self.__index]]
+        value = [self[field][self.__indices[self.__index]] for
+                 field in self.__fields]
         self.__index += 1
         return value
 
@@ -62,7 +74,7 @@ class HDF5Loader(File):
     def steps(self):
         try:
             self._check_field()
-            return int(self[self.__field].shape[0] // self.__batch_size)
+            return int(len(self.__indices) // self.__batch_size)
         except AttributeError as e:
             raise e("Set the batch size with "
                     "self.set_batch_size(batch_size) or call "
@@ -74,21 +86,26 @@ class HDF5Loader(File):
         you do not want to change the batch size.
         batch_size (int): mini batch size.
 
-        yield (numpy.array): mini batch.
+        yield (list): list with mini batches data
         """
         self._check_field()
         if batch_size is not None:
             self.__batch_size = batch_size
-        try:
-            batch = np.empty((self.__batch_size, self[self.__field].shape[1]),
-                             dtype=self[self.__field].dtype)
-        # the dataset does not have dimension value for the features
-        except IndexError:
-            batch = np.empty((self.__batch_size, 1),
-                             dtype=self[self.__field].dtype)
+        batches = list()
+        for field in self.__fields:
+            try:
+                batch = np.empty((self.__batch_size, self[field].shape[1]),
+                                 dtype=self[field].dtype)
+            # the dataset does not have dimension value for the features
+            except IndexError:
+                batch = np.empty((self.__batch_size, 1),
+                                 dtype=self[field].dtype)
+            batches.append(batch)
         while True:
             index = 0
             while index < self.__batch_size:
-                batch[index] = next(self)
+                data = next(self)
+                for i, batch in enumerate(batches):
+                    batch[index] = data[i]
                 index += 1
-            yield batch
+            yield batches

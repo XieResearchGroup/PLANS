@@ -19,10 +19,10 @@ def init_model(Model):
 
 
 def callback_list(log_path, es_patience, model):
-    from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
+    from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.callbacks import LearningRateScheduler
 
-    tbcb = TensorBoard(log_path)
+    # tbcb = TensorBoard(log_path)
     escb = EarlyStopping(
         "val_acc",
         patience=es_patience,
@@ -30,7 +30,7 @@ def callback_list(log_path, es_patience, model):
         mode="max"
     )
     lrcb = LearningRateScheduler(model.scheduler)
-    cb_list = [tbcb, escb, lrcb]
+    cb_list = [escb, lrcb]
     return cb_list
 
 

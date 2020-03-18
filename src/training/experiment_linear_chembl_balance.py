@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+from tqdm import tqdm
 
 from .experiment_linear_balance_classes import ExperimentLinearBalanced
 from ..models.linear import Linear_S, Linear_M, Linear_L
@@ -44,21 +45,27 @@ class ExperimentLinearBalancedLargeOutside(ExperimentLinearBalanced):
         y_mix: mixed lables (soft)
         """
         # y_pred_cyp = model.predict(x_pred)
-        y_pred = model.predict_generator(
-            outside.batch_loader(),
-            verbose=1,
-            steps=outside.steps
-        )
-        # y_pred = np.concatenate([y_pred_cyp, y_pred_outside], axis=0)
         distribution = self.find_distribution(y)
-        indices, orig_dis, new_dis = self._find_good(y_pred, distribution)
-        x_mix = np.concatenate([x, x_pred[indices]], axis=0)
-        y_mix = np.concatenate([y, y_pred[indices]], axis=0)
+        new_dis = [0] * len(distribution)
+        x_mix = x
+        y_mix = y
+        n_batches = 0
+        pb = tqdm(total=outside.steps)
+        for batch in outside.batch_loader():
+            y_pred = model.predict(batch)
+            indices, _, increase = self._find_good(y_pred, distribution)
+            x_mix = np.concatenate([x_mix, batch[0][indices]], axis=0)
+            y_mix = np.concatenate([y_mix, y_pred[indices]], axis=0)
+            new_dis = [n+i for n, i in zip(new_dis, increase)]
+            n_batches += 1
+            pb.update(1)
+            if n_batches == outside.steps:
+                break
         if shuffle:
             randomed_idx = np.random.permutation(x_mix.shape[0])
             np.take(x_mix, randomed_idx, axis=0, out=x_mix)
             np.take(y_mix, randomed_idx, axis=0, out=y_mix)
-        return x_mix, y_mix, orig_dis, new_dis
+        return x_mix, y_mix, distribution, new_dis
 
     def train_teacher(self,
                       model,

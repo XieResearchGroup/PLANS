@@ -24,7 +24,7 @@ if __name__ == "__main__":
     extracted_data.to_csv("data/ChEMBL24_smiles_fp.csv")
     # Convert the csv file to hdf5 file
     chembl = pd.read_csv("data/ChEMBL24_smiles_fp.csv")
-    h5f = h5py.File("../data/ChEMBL24.hdf5", "w")
+    h5f = h5py.File("data/ChEMBL24.hdf5", "w")
     root_gp = h5f.create_group("/ChEMBL")
     dt = h5py.string_dtype(encoding="utf-8")
     root_gp.create_dataset("ChEMBL_ID",

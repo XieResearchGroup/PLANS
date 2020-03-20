@@ -46,6 +46,7 @@ class ExperimentLinearBalancedLargeOutside(ExperimentLinearBalanced):
         """
         # y_pred_cyp = model.predict(x_pred)
         distribution = self.find_distribution(y)
+        orig_dis = distribution.copy()
         new_dis = [0] * len(distribution)
         x_mix = x
         y_mix = y
@@ -65,7 +66,7 @@ class ExperimentLinearBalancedLargeOutside(ExperimentLinearBalanced):
             randomed_idx = np.random.permutation(x_mix.shape[0])
             np.take(x_mix, randomed_idx, axis=0, out=x_mix)
             np.take(y_mix, randomed_idx, axis=0, out=y_mix)
-        return x_mix, y_mix, distribution, new_dis
+        return x_mix, y_mix, orig_dis, new_dis
 
     def train_teacher(self,
                       model,

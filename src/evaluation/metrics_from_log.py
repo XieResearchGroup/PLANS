@@ -128,8 +128,11 @@ class TrainingLogEvaluator(BaseEvaluator):
         """
         scores = list()
         for rst in self._results2multilabel(classes):
-            score = roc_auc_score(rst[0], rst[1], average=average)
-            scores.append(score)
+            try:
+                score = roc_auc_score(rst[0], rst[1], average=average)
+                scores.append(score)
+            except ValueError:
+                continue
         return scores
 
     def classwise_hits_count_one_result(self, result, classes=32):
@@ -261,7 +264,10 @@ class LogStatisticsCalculator(BaseCalculator):
 
     def _mean_and_stdev(self, data):
         mean = stat.mean(data)
-        stdev = stat.stdev(data)
+        if len(data) > 1:
+            stdev = stat.stdev(data)
+        else:
+            stdev = 0
         return (mean, stdev)
 
     def _cal_stat(self):

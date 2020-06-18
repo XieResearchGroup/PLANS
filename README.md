@@ -1,2 +1,2 @@
-# STDSED
-Self Training Drug Side Effects Detector
+# PLANS
+Partially LAbeled Noisy Student 

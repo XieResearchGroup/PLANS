@@ -1,4 +1,5 @@
 # ignore large datasets
+data/graphs
 data/ChEMBL24*
 data/backup
 

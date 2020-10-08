@@ -93,9 +93,7 @@ class ChEMBL24(Dataset):
             return self._data_len
 
     def get(self, idx):
-        data = torch.load(
-            os.path.join(self.processed_dir, "chembl24_{}.pt".format(idx))
-        )
+        data = torch.load(os.path.join(self.processed_dir, "chembl_{}.pt".format(idx)))
         return data
 
     def _get_data(self):

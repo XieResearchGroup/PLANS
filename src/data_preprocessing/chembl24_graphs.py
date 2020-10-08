@@ -82,8 +82,9 @@ class ChEMBL24(Dataset):
         n = 0
         with open(self.raw_paths[0]) as f:
             for line in f.readlines():
-                n += 1
-        return n - 1
+                if len(line) > 5:  # ignore empty line
+                    n += 1
+        return n - 1  # minus header
 
     def len(self):
         try:

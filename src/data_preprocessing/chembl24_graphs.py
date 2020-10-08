@@ -27,7 +27,7 @@ class ChEMBL24(Dataset):
 
     @property
     def processed_file_names(self):
-        return ["chembl24_10000.pt"]
+        return ["chembl_10000.pt"]
 
     def download(self):
         """Get raw data and save to raw directory."""

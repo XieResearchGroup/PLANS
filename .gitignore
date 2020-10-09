@@ -1,3 +1,6 @@
+# testing scripts
+playground.ipynb
+
 # ignore large datasets
 data/graphs
 data/ChEMBL24*

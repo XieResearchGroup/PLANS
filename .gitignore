@@ -5,6 +5,7 @@ playground.ipynb
 data/graphs
 data/ChEMBL24*
 data/backup
+data/cyp450_smiles_GINfp_labels.json
 
 # papers
 papers/

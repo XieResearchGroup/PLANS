@@ -78,16 +78,20 @@ class ChEMBL24(Dataset):
         q.put("END")
         writer.join()
 
-    # def _get_len(self):
-    #     n = 0
-    #     with open(self.raw_paths[0]) as f:
-    #         for line in f.readlines():
-    #             if len(line) > 5:  # ignore empty line
-    #                 n += 1
-    #     return n - 1  # minus header
+    def _get_len(self):
+        n = 0
+        with open(self.raw_paths[0]) as f:
+            for line in f.readlines():
+                if len(line) > 5:  # ignore empty line
+                    n += 1
+        return n - 1  # minus header
 
     def len(self):
-        return 1739164
+        try:
+            return self._data_len
+        except AttributeError:
+            self._data_len = self._get_len()
+            return self._data_len
 
     def get(self, idx):
         data = torch.load(os.path.join(self.processed_dir, "chembl_{}.pt".format(idx)))

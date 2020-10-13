@@ -33,7 +33,7 @@ def main(
     y_val = convert2hier(y_test, dtype=float)  # for validation during training
     y_eval = convert2vec(y_test, dtype=int)  # for evaluation after training
 
-    data_pred = data_loader.load_unlabeled(["ECFP", "Label"])
+    data_pred = data_loader.load_unlabeled()
 
     # Open log
     now = datetime.now()

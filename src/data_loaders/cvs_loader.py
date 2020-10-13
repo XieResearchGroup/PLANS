@@ -39,7 +39,7 @@ class CVSLoader(_BaseDataLoader):
         index = index.to_list()
         if shuffle:
             random.shuffle(index)
-        splitter = int(len(index)*ratio)
+        splitter = int(len(index) * ratio)
         self._training_rows = index[:splitter]
         self._testing_rows = index[splitter:]
         return self._training_rows, self._testing_rows

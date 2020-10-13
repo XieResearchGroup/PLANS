@@ -4,11 +4,14 @@ import numpy as np
 
 
 def convert2vec(data, dtype=int):
-    data = data.tolist()
-    data = list(map(list, data))
-    data = [list(map(dtype, d)) for d in data]
-    data = np.array(data)
-    return data
+    if isinstance(data[0], str):
+        data = data.tolist()
+        data = list(map(list, data))
+        data = [list(map(dtype, d)) for d in data]
+        data = np.array(data)
+        return data
+    else:
+        return np.stack(data, axis=0)
 
 
 def _if_true_label(label):
@@ -22,11 +25,9 @@ def hierarchical(true_label):
     rounded = np.round(true_label)
     l1 = _if_true_label(rounded)
     l2_1 = _if_true_label(rounded[:, 0:2])
-    l2_2 = _if_true_label(
-        rounded[:, 2:4])
+    l2_2 = _if_true_label(rounded[:, 2:4])
     l2_3 = _if_true_label(rounded[:, 4])
-    return np.concatenate(
-        [l1, l2_1, l2_2, l2_3, rounded, true_label], axis=1)
+    return np.concatenate([l1, l2_1, l2_2, l2_3, rounded, true_label], axis=1)
 
 
 def convert2hier(label, dtype):
@@ -35,11 +36,8 @@ def convert2hier(label, dtype):
     return label.astype(dtype)
 
 
-def fill_unlabeled(predictions,
-                   data_unlabeled,
-                   hard_label=False,
-                   normalize=False):
-    """ Fill the unlabeled blanks in data_unlabeled with predicted labels
+def fill_unlabeled(predictions, data_unlabeled, hard_label=False, normalize=False):
+    """Fill the unlabeled blanks in data_unlabeled with predicted labels
     predictions (numpy.array): predicted labels, shape is (n_samples, n_labels)
     data_unlabeled (numpy.array): str, unlabeled data in "1_10_"-like format
     hard_label (bool): use hard label to label the unlabeled data
@@ -90,7 +88,7 @@ def fill_unlabeled(predictions,
 
 
 def multilabel2onehot(multilabel: str):
-    """ Convert multilabel to onehot
+    """Convert multilabel to onehot
     multilabel (str): a multi-label with format like "10010"
     ========================================================
     return (str): onehot label as a string
@@ -104,8 +102,7 @@ def multilabel2onehot(multilabel: str):
 
 
 def vec2onehot(vec):
-    r""" Convert a multilabel vector to one hot
-    """
+    r"""Convert a multilabel vector to one hot"""
     label = "".join(list(map(str, map(int, vec))))
     onehot = [0] * (2 ** len(label))
     onehot[int(label, 2)] = 1
@@ -123,12 +120,11 @@ def multivec2onehot(multilabel: np.array):
 
 
 def onehot2vec(onehot):
-    r""" Convert a onehot to multilabel vector
-    """
+    r"""Convert a onehot to multilabel vector"""
     # get the positive class index
     index = np.argmax(onehot)
     # decide the output length
-    ml_len = len(bin(len(onehot)-1)) - 2
+    ml_len = len(bin(len(onehot) - 1)) - 2
     # get the str representation of the binarized index
     bin_index_str = bin(index)[2:]  # remove "0b"
     # construct the multilabel string
@@ -149,8 +145,7 @@ def onehot2multivec(onehotlabel: np.array):
 
 
 def _fill_missing(label: str, digits: tuple) -> str:
-    r""" Helper that fill the label with digits
-    """
+    r"""Helper that fill the label with digits"""
     i, j = 0, 0
     label = list(label)
     while j < len(digits):
@@ -163,7 +158,7 @@ def _fill_missing(label: str, digits: tuple) -> str:
 
 
 def partial2onehot(label):
-    r""" Convert a partial multi label to its potential one hot label. e.g.
+    r"""Convert a partial multi label to its potential one hot label. e.g.
         "10_" -> "100" or "101" -> "0000__00"
     label (str): a multilabel with or without missing label(s)
     ===========================================================================

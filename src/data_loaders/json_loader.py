@@ -80,4 +80,4 @@ class JsonLoader(_BaseDataLoader):
             if nl_symbol not in data[2]:
                 continue
             unlabeled.append([np.array(data[1]), data[2]])
-        return unlabeled
+        return np.array(unlabeled)

@@ -5,14 +5,9 @@ from tensorflow.keras.layers import Dense, Add, Dropout
 
 
 class HMLC(Model):
-
-    def __init__(self,
-                 fp_len=2048,
-                 l1_len=1,
-                 l2_len=3,
-                 l3_len=5,
-                 beta=0.5,
-                 drop_rate=0.3):
+    def __init__(
+        self, fp_len=2048, l1_len=1, l2_len=3, l3_len=5, beta=0.5, drop_rate=0.3
+    ):
         super(HMLC, self).__init__()
         self.beta = beta
         self.fp_len = fp_len
@@ -51,51 +46,50 @@ class HMLC(Model):
 
         out_g4 = self.global_dense4(in_g4)
         out_global = tfm.multiply(self.beta, out_g4)
-        out_local = tfm.multiply(1-self.beta, out_l3)
+        out_local = tfm.multiply(1 - self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
 
-        final_out = tf.sigmoid(tf.concat(
-            [out_l1, out_l2, out_l3, global_local_sum], axis=1))
+        final_out = tf.sigmoid(
+            tf.concat([out_l1, out_l2, out_l3, global_local_sum], axis=1)
+        )
         return final_out
 
     def training_loss(self, unlabeled_weight, hier_vio_coef=0.1):
-
         def loss(y_true, y_pred):
             cl = self.crossentropy_loss(y_true, y_pred, unlabeled_weight)
-            hv = self.hierarchical_violation(
-                y_true, y_pred, hier_vio_coef)
+            hv = self.hierarchical_violation(y_true, y_pred, hier_vio_coef)
             return tf.add(cl, hv)
             # return cl
 
         return loss
 
     @staticmethod
-    def weighted_binary_crossentropy(y_true,
-                                     y_pred,
-                                     unlabeled_weight,
-                                     epsilon=1e-12):
+    def weighted_binary_crossentropy(y_true, y_pred, unlabeled_weight, epsilon=1e-12):
         weights = tf.ones_like(y_true, dtype=tf.float32)
         unlabeled = tf.logical_and(tf.greater(y_true, 0), tf.less(y_true, 1))
         weights = tf.where(unlabeled, float(unlabeled_weight), weights)
         # y_pred = tf.clip_by_value(y_pred, epsilon, 1.-epsilon)
         ce = tf.negative(
             tf.add(
-                tf.multiply(y_true, tfm.log(y_pred+epsilon)),
+                tf.multiply(y_true, tfm.log(y_pred + epsilon)),
                 tf.multiply(
                     tf.subtract(1.0, y_true),
-                    tfm.log(tf.subtract(1.0, y_pred)+epsilon))))
+                    tfm.log(tf.subtract(1.0, y_pred) + epsilon),
+                ),
+            )
+        )
         weighted_ce = tf.multiply(weights, ce)
         crossentropy = tf.reduce_mean(weighted_ce)
         return crossentropy
 
     def crossentropy_loss(self, y_true, y_pred, unlabeled_weight):
-        y_true_global = y_true[:, -self.l3_len:]
-        y_pred_global = y_pred[:, -self.l3_len:]
-        y_true_l1 = y_true[:, 0:self.l1_len]
-        y_pred_l1 = y_pred[:, 0:self.l1_len]
-        y_true_l2 = y_true[:, self.l1_len:self.l1_len+self.l2_len]
-        y_pred_l2 = y_pred[:, self.l1_len:self.l1_len+self.l2_len]
+        y_true_global = y_true[:, -self.l3_len :]
+        y_pred_global = y_pred[:, -self.l3_len :]
+        y_true_l1 = y_true[:, 0 : self.l1_len]
+        y_pred_l1 = y_pred[:, 0 : self.l1_len]
+        y_true_l2 = y_true[:, self.l1_len : self.l1_len + self.l2_len]
+        y_pred_l2 = y_pred[:, self.l1_len : self.l1_len + self.l2_len]
 
         # global_loss = tf.reduce_mean(
         #     tf.keras.losses.binary_crossentropy(
@@ -106,37 +100,35 @@ class HMLC(Model):
         #     tf.keras.losses.binary_crossentropy(y_true_l2, y_pred_l2))
 
         global_loss = self.weighted_binary_crossentropy(
-            y_true_global, y_pred_global, unlabeled_weight)
+            y_true_global, y_pred_global, unlabeled_weight
+        )
         local_loss_1 = self.weighted_binary_crossentropy(
-            y_true_l1, y_pred_l1, unlabeled_weight)
+            y_true_l1, y_pred_l1, unlabeled_weight
+        )
         local_loss_2 = self.weighted_binary_crossentropy(
-            y_true_l2, y_pred_l2, unlabeled_weight)
+            y_true_l2, y_pred_l2, unlabeled_weight
+        )
 
         local_loss = tf.add(local_loss_1, local_loss_2)
         return tf.add(global_loss, local_loss)
 
-    def hierarchical_violation(self,
-                               y_true,
-                               y_pred,
-                               hier_vio_coef,
-                               epsilon=1e-12):
-        l1 = y_pred[:, 0:self.l1_len]
-        l2 = y_pred[:, self.l1_len:self.l1_len+self.l2_len]
-        l3 = y_pred[:, self.l1_len+self.l2_len:]
+    def hierarchical_violation(self, y_true, y_pred, hier_vio_coef, epsilon=1e-12):
+        l1 = y_pred[:, 0 : self.l1_len]
+        l2 = y_pred[:, self.l1_len : self.l1_len + self.l2_len]
+        l3 = y_pred[:, self.l1_len + self.l2_len :]
 
         l1_l2 = tf.reduce_mean(tf.maximum(0.0, tf.subtract(l2, l1)))
         l2_l3_1 = tf.reduce_mean(
-            tf.maximum(
-                0.0, tf.subtract(l3[:, 0:2], tf.expand_dims(l2[:, 0], 1))))
+            tf.maximum(0.0, tf.subtract(l3[:, 0:2], tf.expand_dims(l2[:, 0], 1)))
+        )
         l2_l3_2 = tf.reduce_mean(
-            tf.maximum(
-                0.0, tf.subtract(l3[:, 2:4], tf.expand_dims(l2[:, 1], 1))))
+            tf.maximum(0.0, tf.subtract(l3[:, 2:4], tf.expand_dims(l2[:, 1], 1)))
+        )
         l2_l3_3 = tf.reduce_mean(
-            tf.maximum(
-                0.0, tf.subtract(l3[:, 4], tf.expand_dims(l2[:, 2], 1))))
-        hier_viol = tf.multiply(
-            hier_vio_coef, (l1_l2 + l2_l3_1 + l2_l3_2 + l2_l3_3))
-        hier_viol = tf.clip_by_value(hier_viol, epsilon, 5.)
+            tf.maximum(0.0, tf.subtract(l3[:, 4], tf.expand_dims(l2[:, 2], 1)))
+        )
+        hier_viol = tf.multiply(hier_vio_coef, (l1_l2 + l2_l3_1 + l2_l3_2 + l2_l3_3))
+        hier_viol = tf.clip_by_value(hier_viol, epsilon, 5.0)
         return hier_viol
 
     def scheduler(self, epoch):
@@ -149,7 +141,6 @@ class HMLC(Model):
 
 
 class HMLC_M(HMLC):
-
     def __init__(self, *args, **kwargs):
         super(HMLC_M, self).__init__(*args, **kwargs)
         self.global_dense4 = Dense(int(self.fp_len), activation="elu")
@@ -180,12 +171,13 @@ class HMLC_M(HMLC):
         out_g5 = self.global_dense5(in_g5)
 
         out_global = tfm.multiply(self.beta, out_g5)
-        out_local = tfm.multiply(1-self.beta, out_l3)
+        out_local = tfm.multiply(1 - self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
 
-        final_out = tf.sigmoid(tf.concat(
-            [out_l1, out_l2, out_l3, global_local_sum], axis=1))
+        final_out = tf.sigmoid(
+            tf.concat([out_l1, out_l2, out_l3, global_local_sum], axis=1)
+        )
         return final_out
 
     def scheduler(self, epoch):
@@ -198,7 +190,6 @@ class HMLC_M(HMLC):
 
 
 class HMLC_L(HMLC_M):
-
     def __init__(self, *args, **kwargs):
         super(HMLC_L, self).__init__(*args, **kwargs)
         self.global_dense5 = Dense(int(self.fp_len), activation="elu")
@@ -235,12 +226,13 @@ class HMLC_L(HMLC_M):
         out_g6 = self.global_dense6(in_g6)
 
         out_global = tfm.multiply(self.beta, out_g6)
-        out_local = tfm.multiply(1-self.beta, out_l3)
+        out_local = tfm.multiply(1 - self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
 
-        final_out = tf.sigmoid(tf.concat(
-            [out_l1, out_l2, out_l3, global_local_sum], axis=1))
+        final_out = tf.sigmoid(
+            tf.concat([out_l1, out_l2, out_l3, global_local_sum], axis=1)
+        )
         return final_out
 
     def scheduler(self, epoch):
@@ -253,7 +245,6 @@ class HMLC_L(HMLC_M):
 
 
 class HMLC_XL(HMLC_L):
-
     def __init__(self, *args, **kwargs):
         super(HMLC_XL, self).__init__(*args, **kwargs)
         self.global_dense1_2 = Dense(self.fp_len, activation="elu")
@@ -291,12 +282,13 @@ class HMLC_XL(HMLC_L):
         out_g6 = self.global_dense6(in_g6)
 
         out_global = tfm.multiply(self.beta, out_g6)
-        out_local = tfm.multiply(1-self.beta, out_l3)
+        out_local = tfm.multiply(1 - self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
 
-        final_out = tf.sigmoid(tf.concat(
-            [out_l1, out_l2, out_l3, global_local_sum], axis=1))
+        final_out = tf.sigmoid(
+            tf.concat([out_l1, out_l2, out_l3, global_local_sum], axis=1)
+        )
         return final_out
 
     def scheduler(self, epoch):
@@ -309,7 +301,6 @@ class HMLC_XL(HMLC_L):
 
 
 class HMLC_XXL(HMLC_XL):
-
     def __init__(self, *args, **kwargs):
         super(HMLC_XXL, self).__init__(*args, **kwargs)
         self.global_dense1_3 = Dense(self.fp_len, activation="elu")
@@ -350,12 +341,13 @@ class HMLC_XXL(HMLC_XL):
         out_g6 = self.global_dense6(in_g6)
 
         out_global = tfm.multiply(self.beta, out_g6)
-        out_local = tfm.multiply(1-self.beta, out_l3)
+        out_local = tfm.multiply(1 - self.beta, out_l3)
 
         global_local_sum = self.add4([out_global, out_local])
 
-        final_out = tf.sigmoid(tf.concat(
-            [out_l1, out_l2, out_l3, global_local_sum], axis=1))
+        final_out = tf.sigmoid(
+            tf.concat([out_l1, out_l2, out_l3, global_local_sum], axis=1)
+        )
         return final_out
 
     def scheduler(self, epoch):

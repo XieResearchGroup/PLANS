@@ -3,9 +3,10 @@
 ###############################################################
 
 import tensorflow as tf
+import numpy as np
 
 from ..data_loaders.json_loader import JsonLoader
-from ..utils.label_convertors import convert2vec, partial2onehot
+from ..utils.label_convertors import convert2vec, partial2onehot, multilabel2onehot
 from .training_args import LMMixupArgs
 from .experiment_linear_exploit_partial import ExperimentLinearExploitPartial
 
@@ -14,7 +15,10 @@ class ExperimentLinearGinFP(ExperimentLinearExploitPartial):
     def load_data(self):
         data_loader = JsonLoader(self.data_path)
         x_train, y_train, x_test, y_test = data_loader.load_data(ratio=0.7)
+
+        y_train = np.array([multilabel2onehot(label) for label in y_train])
         y_train = convert2vec(y_train, dtype=float)
+        y_test = np.array([multilabel2onehot(label) for label in y_test])
         y_test = convert2vec(y_test, dtype=float)  # for evaluation after training
 
         if self.mixup is not None:

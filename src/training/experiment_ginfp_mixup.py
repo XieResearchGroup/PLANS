@@ -2,94 +2,41 @@
 # Train HMLC, HMLC_M, HMLC_L models with Noisy Student method #
 ###############################################################
 
-import os
-from datetime import datetime
-
 from ..data_loaders.json_loader import JsonLoader
-from ..utils.label_convertors import convert2vec, convert2hier
-from .train_model import noisy_student
-from .training_args import TrainingArgs
+from ..utils.label_convertors import convert2vec, partial2onehot
+from .training_args import LMMixupArgs
+from .experiment_linear_exploit_partial import ExperimentLinearExploitPartial
 
 
-def main(
-    data_path,
-    DataLoader=JsonLoader,
-    learning_rate=0.001,
-    drop_rate=0.3,
-    batch_size=128,
-    epochs=30,
-    es_patience=5,
-    log_path="../logs",
-    if_hard=False,
-    comment=None,
-    unlabeled_weight=0.5,
-):
-    # Data
-    data_loader = DataLoader(data_path)
-    x_train, y_train, x_test, y_test = data_loader.load_data(ratio=0.7)
+class ExperimentLinearGinFP(ExperimentLinearExploitPartial):
+    def load_data(self):
+        data_loader = JsonLoader(self.data_path)
+        x_train, y_train, x_test, y_test = data_loader.load_data(ratio=0.7)
+        y_train = convert2vec(y_train, dtype=float)
+        y_test = convert2vec(y_test, dtype=float)  # for evaluation after training
 
-    y_train = convert2hier(y_train, dtype=float)
-
-    y_val = convert2hier(y_test, dtype=float)  # for validation during training
-    y_eval = convert2vec(y_test, dtype=int)  # for evaluation after training
-
-    data_pred = data_loader.load_unlabeled()
-
-    # Open log
-    now = datetime.now()
-    timestamp = now.strftime(r"%Y%m%d_%H%M%S")
-    log_path = os.path.sep.join(log_path.split("/"))
-    log_path = os.path.join(log_path, timestamp)
-    os.makedirs(log_path, exist_ok=True)
-    log_f_path = os.path.join(log_path, "logs.txt")
-    log_f = open(log_f_path, "w")
-
-    log_f.write("Results with mixup:\n\n")
-    noisy_student(
-        x_train=x_train,
-        y_train=y_train,
-        unlabeled_weight=1,
-        x_test=x_test,
-        y_val=y_val,
-        y_eval=y_eval,
-        data_pred=data_pred,
-        learning_rate=learning_rate,
-        drop_rate=drop_rate,
-        batch_size=batch_size,
-        epochs=epochs,
-        es_patience=es_patience,
-        log_path=log_path,
-        log_fh=log_f,
-        comment=comment,
-        mixup_=0.4,
-        repeat=3,
-    )
-
-    log_f.write("#" * 40 + "\n")
-    log_f.write("Results without mixup:\n\n")
-    noisy_student(
-        x_train=x_train,
-        y_train=y_train,
-        unlabeled_weight=1,
-        x_test=x_test,
-        y_val=y_val,
-        y_eval=y_eval,
-        data_pred=data_pred,
-        learning_rate=learning_rate,
-        drop_rate=drop_rate,
-        batch_size=batch_size,
-        epochs=epochs,
-        es_patience=es_patience,
-        log_path=log_path,
-        log_fh=log_f,
-        comment=comment,
-        mixup_=None,
-    )
-    log_f.write("#" * 40 + "\n")
-    log_f.close()
+        if self.mixup is not None:
+            x_train, y_train = self._mixup(x_train, y_train)
+        data_unlabeled = data_loader.load_unlabeled()
+        x_unlabeled = data_unlabeled[:, 0]
+        y_partial = data_unlabeled[:, 1]
+        for i, label in enumerate(y_partial):
+            y_partial[i] = partial2onehot(label)
+        return x_train, y_train, x_test, y_test, x_unlabeled, y_partial
 
 
 if __name__ == "__main__":
-    parser = TrainingArgs()
+    parser = LMMixupArgs()
     args = parser.parse_args()
-    main(**vars(args))
+    experiment = ExperimentLinearGinFP(
+        data_path=args.data_path,
+        log_path=args.log_path,
+        es_patience=args.es_patience,
+        batch_size=args.batch_size,
+        epochs=args.epochs,
+        n_repeat=args.repeat,
+        mixup=args.mixup,
+        mixup_repeat=args.mixup_repeat,
+        rand_seed=args.rand_seed,
+    )
+    experiment.run_experiment()

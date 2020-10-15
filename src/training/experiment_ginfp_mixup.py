@@ -25,6 +25,7 @@ class ExperimentLinearGinFP(ExperimentLinearExploitPartial):
             x_train, y_train = self._mixup(x_train, y_train)
         data_unlabeled = data_loader.load_unlabeled()
         x_unlabeled = data_unlabeled[:, 0]
+        x_unlabeled = convert2vec(x_unlabeled, dtype=float)
         y_partial = data_unlabeled[:, 1]
         for i, label in enumerate(y_partial):
             y_partial[i] = partial2onehot(label)

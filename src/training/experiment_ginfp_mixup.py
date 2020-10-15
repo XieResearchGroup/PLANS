@@ -2,6 +2,8 @@
 # Train HMLC, HMLC_M, HMLC_L models with Noisy Student method #
 ###############################################################
 
+import tensorflow as tf
+
 from ..data_loaders.json_loader import JsonLoader
 from ..utils.label_convertors import convert2vec, partial2onehot
 from .training_args import LMMixupArgs
@@ -26,6 +28,8 @@ class ExperimentLinearGinFP(ExperimentLinearExploitPartial):
 
 
 if __name__ == "__main__":
+    gpus = tf.config.list_physical_devices("GPU")
+    tf.config.experimental.set_memory_growth(gpus[0], True)
     parser = LMMixupArgs()
     args = parser.parse_args()
     experiment = ExperimentLinearGinFP(

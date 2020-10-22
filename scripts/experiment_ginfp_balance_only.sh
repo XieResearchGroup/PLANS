@@ -2,7 +2,7 @@ for i in {1..5}
 do
     CUDA_VISIBLE_DEVICES=$1 \
     python -m src.training.experiment_ginfp_balance_only \
-    -p ./data/fromraw_cid_inchi_smiles_fp_labels_onehots.csv \
+    -p ./data/cyp450_smiles_GINfp_labels.json \
     --outside-path ./data/ChEMBL24_ginfp.hdf5 \
     -e 1000 \
     -b 128 \

@@ -7,7 +7,7 @@ do
     -e 1000 \
     -b 128 \
     --es-patience 20 \
-    --log-path ./logs/linear/chembl24_balanced_partial_no_mixup \
+    --log-path ./logs/ginfp/chembl24_balanced_partial_no_mixup \
     --repeat 2 \
     --rand-seed $i
 done

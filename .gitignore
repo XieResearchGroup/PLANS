@@ -1,17 +1,20 @@
 # testing scripts
 playground.ipynb
+playground.py
 
 # ignore large datasets
 data/graphs
 data/ChEMBL24*
 data/backup
 data/cyp450_smiles_GINfp_labels.json
+data/chembl24_smiles_GINfp.json
 
 # papers
 papers/
 
 # logs
 logs/
+*.out
 
 # vs code configuration file
 .vscode/

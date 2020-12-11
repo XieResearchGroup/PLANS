@@ -4,25 +4,30 @@ from ..models.linear import Linear_S, Linear_M, Linear_L
 from .train_model import ns_linear_teacher_model, ns_linear_student_model
 from .train_model import predict_and_mix, plot_history
 from .training_args import LinearModelTrainingArgs
-from ..data_loaders.json_loader import JsonLoader
-from ..utils.label_convertors import convert2vec, multilabel2onehot
+from ..data_loaders.cvs_loader import CVSLoader
+from ..utils.label_convertors import convert2vec
 from ..utils.training_utils import init_model, callback_list, open_log
 from ..utils.training_utils import find_best
 
 
-def main(
-    data_path, log_path, es_patience, batch_size, epochs, n_repeat, rand_seed=None
-):
+def main(data_path,
+         log_path,
+         es_patience,
+         batch_size,
+         epochs,
+         n_repeat,
+         rand_seed=None):
     # data
-    data_loader = JsonLoader(data_path, rand_seed=rand_seed)
-    x_train, y_train, x_test, y_test = data_loader.load_data(ratio=0.7, shuffle=True)
-    y_train = np.stack(
-        [multilabel2onehot(l, return_type="vec") for l in y_train]
-    ).astype(np.float)
-    y_test = np.stack([multilabel2onehot(l, return_type="vec") for l in y_test]).astype(
-        np.float
-    )
-    x_unlabeled = data_loader.load_unlabeled()
+    data_loader = CVSLoader(data_path, rand_seed=rand_seed)
+    x_train, y_train, x_test, y_test = data_loader.load_data(
+        ["ECFP", "onehot_label"],
+        ratio=0.7,
+        shuffle=True)
+    convert2vec_float = partial(convert2vec, dtype=float)
+    x_train, y_train, x_test, y_test = list(
+        map(convert2vec_float, [x_train, y_train, x_test, y_test]))
+    x_unlabeled = data_loader.load_unlabeled(["ECFP", "onehot_label"])
+    x_unlabeled = convert2vec(x_unlabeled[:, 0], dtype=float)
 
     # Open log
     log_f, log_path = open_log(log_path)
@@ -47,7 +52,7 @@ def main(
         cb_list=cb_list,
         log_f=log_f,
         log_path=log_path,
-        n_repeat=n_repeat,
+        n_repeat=n_repeat
     )
     # plot the training history
     plot_history(histories, log_path, str(trained_model))
@@ -58,7 +63,11 @@ def main(
     best_acc[str(trained_model)] = max_acc
 
     x_mix, y_mix = predict_and_mix(
-        trained_model, x_unlabeled, x_train, y_train, shuffle=True
+        trained_model,
+        x_unlabeled,
+        x_train,
+        y_train,
+        shuffle=True
     )
 
     # init model Linear_M
@@ -80,7 +89,7 @@ def main(
         cb_list=cb_list,
         log_f=log_f,
         log_path=log_path,
-        n_repeat=n_repeat,
+        n_repeat=n_repeat
     )
     # plot the training history
     plot_history(histories, log_path, str(trained_model))
@@ -91,7 +100,11 @@ def main(
     best_acc[str(trained_model)] = max_acc
 
     x_mix, y_mix = predict_and_mix(
-        trained_model, x_unlabeled, x_train, y_train, shuffle=True
+        trained_model,
+        x_unlabeled,
+        x_train,
+        y_train,
+        shuffle=True
     )
 
     # init model Linear_L
@@ -113,7 +126,7 @@ def main(
         cb_list=cb_list,
         log_f=log_f,
         log_path=log_path,
-        n_repeat=n_repeat,
+        n_repeat=n_repeat
     )
     # plot the training history
     plot_history(histories, log_path, str(trained_model))
@@ -139,5 +152,5 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         epochs=args.epochs,
         n_repeat=args.repeat,
-        rand_seed=args.rand_seed,
+        rand_seed=args.rand_seed
     )

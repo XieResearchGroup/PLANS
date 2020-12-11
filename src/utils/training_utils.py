@@ -4,8 +4,8 @@ import os
 import numpy as np
 
 
-def init_model(Model):
-    model = Model()
+def init_model(Model, drop_rate=0.3):
+    model = Model(drop_rate=drop_rate)
     if model.out_len == 1:
         loss = "binary_crossentropy"
     else:
@@ -18,7 +18,7 @@ def init_model(Model):
     return model
 
 
-def callback_list(log_path, es_patience, model):
+def callback_list(log_path, es_patience, model, learning_rate=1e-6):
     from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.callbacks import LearningRateScheduler
 
@@ -29,7 +29,7 @@ def callback_list(log_path, es_patience, model):
         restore_best_weights=True,
         mode="max"
     )
-    lrcb = LearningRateScheduler(model.scheduler)
+    lrcb = LearningRateScheduler(lambda e: model.scheduler(e, learning_rate))
     cb_list = [escb, lrcb]
     return cb_list
 

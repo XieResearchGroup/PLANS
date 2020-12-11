@@ -87,7 +87,7 @@ def fill_unlabeled(predictions, data_unlabeled, hard_label=False, normalize=Fals
     return data_labeled
 
 
-def multilabel2onehot(multilabel: str):
+def multilabel2onehot(multilabel: str, return_type="str"):
     """Convert multilabel to onehot
     multilabel (str): a multi-label with format like "10010"
     ========================================================
@@ -98,7 +98,12 @@ def multilabel2onehot(multilabel: str):
     onehot = [0] * length
     # get the one-hot vector
     onehot[int(multilabel, 2)] = 1
-    return "".join(map(str, onehot))
+    if return_type == "str":
+        return "".join(map(str, onehot))
+    elif return_type == "vec":
+        return np.array(onehot)
+    else:
+        raise ValueError(f"Illegal return_type. Should be 'str' or 'vec', got {return_type}.")
 
 
 def vec2onehot(vec):

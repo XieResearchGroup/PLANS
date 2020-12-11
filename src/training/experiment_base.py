@@ -1,4 +1,5 @@
 from functools import partial
+import random
 
 from ..models.linear import Linear_S, Linear_M, Linear_L
 from .train_model import predict_and_mix, plot_history
@@ -12,17 +13,20 @@ from ..utils.training_utils import training_log
 
 
 class ExperimentBase:
-
-    def __init__(self,
-                 data_path,
-                 log_path,
-                 es_patience,
-                 batch_size,
-                 epochs,
-                 n_repeat,
-                 rand_seed,
-                 mixup=None,
-                 mixup_repeat=None):
+    def __init__(
+        self,
+        data_path,
+        log_path,
+        es_patience,
+        batch_size,
+        epochs,
+        n_repeat,
+        rand_seed,
+        mixup=None,
+        mixup_repeat=None,
+        learning_rate=1e-6,
+        drop_rate=0.3
+    ):
         self.data_path = data_path
         self.log_path = log_path
         self.es_patience = es_patience
@@ -32,23 +36,24 @@ class ExperimentBase:
         self.rand_seed = rand_seed
         self.mixup = mixup
         self.mixup_repeat = mixup_repeat
+        self.learning_rate=learning_rate
+        self.drop_rate=drop_rate
         self.best_loss = dict()
         self.best_acc = dict()
 
     def _mixup(self, x, y):
-        x_mix, y_mix = mixup(
-            self.mixup, self.mixup, x, y, repeat=self.mixup_repeat)
+        x_mix, y_mix = mixup(self.mixup, self.mixup, x, y, repeat=self.mixup_repeat)
         return x_mix, y_mix
 
     def load_data(self):
-        data_loader = CVSLoader(self.data_path)
+        data_loader = CVSLoader(self.data_path, rand_seed=self.rand_seed)
         x_train, y_train, x_test, y_test = data_loader.load_data(
-            ["ECFP", "onehot_label"],
-            ratio=0.7,
-            shuffle=True)
+            ["ECFP", "onehot_label"], ratio=0.7, shuffle=True
+        )
         convert2vec_float = partial(convert2vec, dtype=float)
         x_train, y_train, x_test, y_test = list(
-            map(convert2vec_float, [x_train, y_train, x_test, y_test]))
+            map(convert2vec_float, [x_train, y_train, x_test, y_test])
+        )
         if self.mixup is not None:
             x_train, y_train = self._mixup(x_train, y_train)
         x_unlabeled = data_loader.load_unlabeled(["ECFP", "onehot_label"])
@@ -58,18 +63,20 @@ class ExperimentBase:
     def open_log_(self, log_path):
         return open_log(log_path)
 
-    def train_teacher(self,
-                      model,
-                      x_train,
-                      y_train,
-                      x_test,
-                      y_test,
-                      x_pred,
-                      batch_size,
-                      epochs,
-                      log_f,
-                      log_path,
-                      n_repeat):
+    def train_teacher(
+        self,
+        model,
+        x_train,
+        y_train,
+        x_test,
+        y_test,
+        x_pred,
+        batch_size,
+        epochs,
+        log_f,
+        log_path,
+        n_repeat,
+    ):
         r""" Train linear model with Noisy Student
         model: the model to be trained
         x_train: training data
@@ -85,8 +92,10 @@ class ExperimentBase:
         =======================================================================
         return: the trained model, training history
         """
-        model = init_model(model)
-        cb_list = callback_list(log_path, self.es_patience, model)
+        model = init_model(model, drop_rate=self.drop_rate)
+        cb_list = callback_list(
+            log_path, self.es_patience, model, learning_rate=self.learning_rate
+        )
         histories = list()
         log_f.write("training {}:\n".format(str(model)))
         train_his = model.fit(
@@ -95,7 +104,7 @@ class ExperimentBase:
             batch_size=batch_size,
             epochs=epochs,
             callbacks=cb_list,
-            validation_data=[x_test, y_test]
+            validation_data=[x_test, y_test],
         )
         histories.append(train_his)
 
@@ -105,15 +114,11 @@ class ExperimentBase:
         # repeat training the model
         for i in range(n_repeat):
             log_f.write(
-                "repeat training {}, {}/{}:\n".format(
-                    str(model), i+1, n_repeat))
+                "repeat training {}, {}/{}:\n".format(str(model), i + 1, n_repeat)
+            )
             # label unlabled
             x_mix, y_mix = predict_and_mix(
-                model=model,
-                x_pred=x_pred,
-                x=x_train,
-                y=y_train,
-                shuffle=True
+                model=model, x_pred=x_pred, x=x_train, y=y_train, shuffle=True
             )
             if self.mixup is not None:
                 x_mix, y_mix = self._mixup(x_mix, y_mix)
@@ -124,7 +129,7 @@ class ExperimentBase:
                 batch_size=batch_size,
                 epochs=epochs,
                 callbacks=cb_list,
-                validation_data=[x_test, y_test]
+                validation_data=[x_test, y_test],
             )
             histories.append(train_his)
             # log training history
@@ -133,19 +138,21 @@ class ExperimentBase:
 
         return model, histories
 
-    def train_student(self,
-                      student_model,
-                      teacher_model,
-                      x_train,
-                      y_train,
-                      x_test,
-                      y_test,
-                      x_pred,
-                      batch_size,
-                      epochs,
-                      log_f,
-                      log_path,
-                      n_repeat):
+    def train_student(
+        self,
+        student_model,
+        teacher_model,
+        x_train,
+        y_train,
+        x_test,
+        y_test,
+        x_pred,
+        batch_size,
+        epochs,
+        log_f,
+        log_path,
+        n_repeat,
+    ):
         r""" Train student linear model with Noisy Student
         student_model: the model to be trained
         teacher_model: the trained model for generating the first batch of
@@ -163,16 +170,17 @@ class ExperimentBase:
         =======================================================================
         return: the trained model, training history
         """
-        x_mix, y_mix = predict_and_mix(teacher_model,
-                                       x_pred,
-                                       x_train,
-                                       y_train,
-                                       shuffle=True)
-        x_mix, y_mix = self._mixup(x_mix, y_mix)
+        x_mix, y_mix = predict_and_mix(
+            teacher_model, x_pred, x_train, y_train, shuffle=True
+        )
+        if self.mixup is not None:
+            x_mix, y_mix = self._mixup(x_mix, y_mix)
         # init model
-        model = init_model(student_model)
+        model = init_model(student_model, drop_rate=self.drop_rate)
         # callbacks
-        cb_list = callback_list(log_path, self.es_patience, model)
+        cb_list = callback_list(
+            log_path, self.es_patience, model, learning_rate=self.learning_rate
+        )
         histories = list()
         log_f.write("training {}:\n".format(str(model)))
         train_his = model.fit(
@@ -181,7 +189,7 @@ class ExperimentBase:
             batch_size=batch_size,
             epochs=epochs,
             callbacks=cb_list,
-            validation_data=[x_test, y_test]
+            validation_data=[x_test, y_test],
         )
         histories.append(train_his)
 
@@ -191,15 +199,11 @@ class ExperimentBase:
         # repeat training the model
         for i in range(n_repeat):
             log_f.write(
-                "repeat training {}, {}/{}:\n".format(
-                    str(model), i+1, n_repeat))
+                "repeat training {}, {}/{}:\n".format(str(model), i + 1, n_repeat)
+            )
             # label unlabled
             x_mix, y_mix = predict_and_mix(
-                model=model,
-                x_pred=x_pred,
-                x=x_train,
-                y=y_train,
-                shuffle=True
+                model=model, x_pred=x_pred, x=x_train, y=y_train, shuffle=True
             )
             if self.mixup is not None:
                 x_mix, y_mix = self._mixup(x_mix, y_mix)
@@ -210,7 +214,7 @@ class ExperimentBase:
                 batch_size=batch_size,
                 epochs=epochs,
                 callbacks=cb_list,
-                validation_data=[x_test, y_test]
+                validation_data=[x_test, y_test],
             )
             histories.append(train_his)
             # log training history
@@ -245,7 +249,7 @@ class ExperimentBase:
             epochs=self.epochs,
             log_f=log_f,
             log_path=log_path,
-            n_repeat=self.n_repeat
+            n_repeat=self.n_repeat,
         )
         # log results
         self.log_training(trained_model, histories, log_path)
@@ -263,7 +267,7 @@ class ExperimentBase:
                 epochs=self.epochs,
                 log_f=log_f,
                 log_path=log_path,
-                n_repeat=self.n_repeat
+                n_repeat=self.n_repeat,
             )
             # log results
             self.log_training(trained_model, histories, log_path)
@@ -285,6 +289,6 @@ if __name__ == "__main__":
         n_repeat=args.repeat,
         mixup=args.mixup,
         mixup_repeat=args.mixup_repeat,
-        rand_seed=args.rand_seed
+        rand_seed=args.rand_seed,
     )
     experiment.run_experiment()

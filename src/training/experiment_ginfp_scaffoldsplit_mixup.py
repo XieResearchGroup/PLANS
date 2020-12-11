@@ -11,10 +11,10 @@ from .training_args import LMMixupArgs
 from .experiment_linear_exploit_partial import ExperimentLinearExploitPartial
 
 
-class ExperimentLinearGinFP(ExperimentLinearExploitPartial):
+class ExperimentLinearGinFPScaffoldSplitting(ExperimentLinearExploitPartial):
     def load_data(self):
         data_loader = JsonLoader(self.data_path, rand_seed=self.rand_seed)
-        x_train, y_train, x_test, y_test = data_loader.load_data(ratio=0.7)
+        x_train, y_train, x_test, y_test = data_loader.load_data(ratio=0.7, scaffold_splitting=True)
 
         y_train = np.array([multilabel2onehot(label) for label in y_train])
         y_train = convert2vec(y_train, dtype=float)
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     tf.config.experimental.set_memory_growth(gpus[0], True)
     parser = LMMixupArgs()
     args = parser.parse_args()
-    experiment = ExperimentLinearGinFP(
+    experiment = ExperimentLinearGinFPScaffoldSplitting(
         data_path=args.data_path,
         log_path=args.log_path,
         es_patience=args.es_patience,

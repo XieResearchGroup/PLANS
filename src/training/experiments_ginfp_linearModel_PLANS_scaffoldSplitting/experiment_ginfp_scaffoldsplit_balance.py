@@ -1,41 +1,41 @@
 #####################################################################################
-# Experiment with GIN fingerprints. Noisy Student only. Exploit partial labels but  #
-# no mixup.                                                                         #
+# Experiment with GIN fingerprints. Noisy Student only. Exploit partial labels. Use #
+# scaffold based splitting.                                                         #
 #####################################################################################
 
 
 import tensorflow as tf
 import numpy as np
 
-from ..data_loaders.json_loader import JsonLoader
-from ..data_loaders.hdf5_loader import HDF5Loader
-from ..utils.label_convertors import convert2vec, partial2onehot, multilabel2onehot
-from ..models.linear import Linear_S, Linear_M, Linear_L
-from .training_args import LMMixupOutsideDataArgs
-from .experiment_linear_chembl_balance_partial_no_mixup import (
+from ...data_loaders.json_loader import JsonLoader
+from ...data_loaders.hdf5_loader import HDF5Loader
+from ...utils.label_convertors import convert2vec, partial2onehot, multilabel2onehot
+from ...models.linear import Linear_S, Linear_M, Linear_L
+from ..training_args import LMMixupOutsideDataArgs
+from ..experiment_linear_chembl_balance_partial_no_mixup import (
     ExpLinBalLargeOutsideExploitPartialNoMixup,
 )
 
 
-class ExperimentLinearGinFPBalance(ExpLinBalLargeOutsideExploitPartialNoMixup):
+class Experiment(ExpLinBalLargeOutsideExploitPartialNoMixup):
     def load_data(self):
-        data_loader = JsonLoader(self.data_path)
-        outside_data_loader = HDF5Loader(self.outside_data_path, "r")
-        x_train, y_train, x_test, y_test = data_loader.load_data(ratio=0.7)
-
-        y_train = np.array([multilabel2onehot(label) for label in y_train])
-        y_train = convert2vec(y_train, dtype=float)
-        y_test = np.array([multilabel2onehot(label) for label in y_test])
-        y_test = convert2vec(y_test, dtype=float)  # for evaluation after training
-
+        data_loader = JsonLoader(self.data_path, rand_seed=self.rand_seed)
+        x_train, y_train, x_test, y_test = data_loader.load_data(
+            ratio=0.7, shuffle=True, scaffold_splitting=True
+        )
+        y_train = np.stack(
+            [multilabel2onehot(l, return_type="vec") for l in y_train]
+        ).astype(np.float)
+        y_test = np.stack(
+            [multilabel2onehot(l, return_type="vec") for l in y_test]
+        ).astype(np.float)
         if self.mixup is not None:
             x_train, y_train = self._mixup(x_train, y_train)
-        data_unlabeled = data_loader.load_unlabeled()
-        x_unlabeled = data_unlabeled[:, 0]
-        x_unlabeled = convert2vec(x_unlabeled, dtype=float)
-        y_partial = data_unlabeled[:, 1]
+        x_unlabeled, y_partial = data_loader.load_unlabeled()
         for i, label in enumerate(y_partial):
             y_partial[i] = partial2onehot(label)
+
+        outside_data_loader = HDF5Loader(self.outside_data_path, "r")
         return (
             x_train,
             y_train,
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     tf.config.experimental.set_memory_growth(gpus[0], True)
     parser = LMMixupOutsideDataArgs()
     args = parser.parse_args()
-    experiment = ExperimentLinearGinFPBalance(
+    experiment = Experiment(
         data_path=args.data_path,
         outside_data_path=args.outside_path,
         log_path=args.log_path,
@@ -117,6 +117,7 @@ if __name__ == "__main__":
         n_repeat=args.repeat,
         mixup=args.mixup,
         mixup_repeat=args.mixup_repeat,
+        learning_rate=args.learning_rate,
         rand_seed=args.rand_seed,
     )
     experiment.run_experiment()

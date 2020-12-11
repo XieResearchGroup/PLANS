@@ -34,13 +34,13 @@ class Linear_S(Model):
         x = self.dense_out(x)
         return x
 
-    def scheduler(self, epoch):
+    def scheduler(self, epoch, init_rate=1e-6):
         if epoch < 20:
-            return 1e-6
+            return init_rate
         elif epoch < 40:
-            return 1e-7
+            return init_rate / 10
         else:
-            return 1e-8
+            return init_rate / 100
 
     def __str__(self):
         return "Linear_S"
@@ -79,18 +79,18 @@ class Linear_L(Linear_M):
 
     def __init__(self, *args, **kwargs):
         super(Linear_L, self).__init__(*args, **kwargs)
-        self.dense4_2 = Dense(self.fp_len * 6, activation="relu")
-        self.dense4_3 = Dense(self.fp_len * 6, activation="relu")
+        self.dense2_2 = Dense(self.fp_len * 6, activation="relu")
+        self.dense2_3 = Dense(self.fp_len * 6, activation="relu")
 
     def call(self, inputs, training=None):
         x = self.dense1(inputs)
         x = self.dense1_2(x)
         x = self.dense2(x)
+        x = self.dense2_2(x)
+        x = self.dense2_3(x)
         x = self.dense3(x)
         x = self.dense3_2(x)
         x = self.dense4(x)
-        x = self.dense4_2(x)
-        x = self.dense4_3(x)
         x = self.dense5(x)
         x = self.dense6(x)
         x = self.dense7(x)

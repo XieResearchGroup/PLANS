@@ -5,8 +5,10 @@ BATCH_SIZE=256
 ES_PATIENCE=20
 REPEAT=3
 MIXUP=0.4
-MIXUP_REPEAT=10
+MIXUP_REPEAT=3
 
+
+# no mixup, no partial
 for i in 0 1029 812 204 6987
 do
     CUDA_VISIBLE_DEVICES=$1 \
@@ -21,6 +23,24 @@ do
     --learning-rate 1e-5
 done
 
+
+# no mixup, use partial
+for i in 0 1029 812 204 6987
+do
+    CUDA_VISIBLE_DEVICES=$1 \
+    python -m src.training.experiments_ginfp_linearModel_PLANS_scaffoldSplitting.experiment_ginfp_scaffoldsplit_balance \
+    -p ./data/cyp450_smiles_GINfp_labels.json \
+    -e $EPOCHS \
+    -b $BATCH_SIZE \
+    --es-patience $ES_PATIENCE \
+    --log-path ./logs/ginfp/ns_NoMixup_balanced_scaffoldSplitting \
+    --repeat $REPEAT \
+    --rand-seed $i \
+    --learning-rate 1e-5
+done
+
+
+# mixup, no partial
 for i in 0 1029 812 204 6987
 do
     CUDA_VISIBLE_DEVICES=$1 \
@@ -36,20 +56,8 @@ do
     --rand-seed $i
 done
 
-for i in 0 1029 812 204 6987
-do
-    CUDA_VISIBLE_DEVICES=$1 \
-    python -m src.training.experiments_ginfp_linearModel_PLANS_scaffoldSplitting.experiment_ginfp_scaffoldsplit_balance \
-    -p ./data/cyp450_smiles_GINfp_labels.json \
-    -e $EPOCHS \
-    -b $BATCH_SIZE \
-    --es-patience $ES_PATIENCE \
-    --log-path ./logs/ginfp/ns_NoMixup_balanced_scaffoldSplitting \
-    --repeat $REPEAT \
-    --rand-seed $i \
-    --learning-rate 1e-5
-done
 
+# mixup, use partial
 for i in 0 1029 812 204 6987
 do
     CUDA_VISIBLE_DEVICES=$1 \
@@ -62,6 +70,6 @@ do
     --repeat $REPEAT \
     --mixup $MIXUP \
     --mixup-repeat $MIXUP_REPEAT \
-    --rand-seed $i \
+    --rand-seed $i
 done
 

@@ -8,6 +8,7 @@ data/ChEMBL24*
 data/backup
 data/cyp450_smiles_GINfp_labels.json
 data/chembl24_smiles_GINfp.json
+data/
 
 # papers
 papers/

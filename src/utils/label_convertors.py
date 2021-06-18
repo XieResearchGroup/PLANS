@@ -1,6 +1,9 @@
 from itertools import product
 
 import numpy as np
+from rdkit.Chem import inchi
+from rdkit.Chem import MolFromSmiles
+from rdkit.Chem.rdMolDescriptors import GetMorganFingerprintAsBitVect
 
 
 def convert2vec(data, dtype=int):
@@ -184,3 +187,11 @@ def partial2onehot(label):
         index = int(binary, 2)
         oh[index] = "_"
     return "".join(oh)
+
+
+def smiles2ecfp(smiles, radius=4, bits=2048):
+    mol = MolFromSmiles(smiles)
+    if mol is None:
+        return
+    fp = GetMorganFingerprintAsBitVect(mol, radius, nBits=bits)
+    return "".join(map(str, list(fp)))

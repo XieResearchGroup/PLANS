@@ -3,8 +3,7 @@ from tensorflow.keras.layers import Dense, Dropout
 
 
 class Linear_S(Model):
-
-    def __init__(self, fp_len=2048, drop_rate=0.3, out_len=32):
+    def __init__(self, fp_len=2048, drop_rate=0.3, out_len=32, activation="softmax"):
         super(Linear_S, self).__init__()
         self.fp_len = fp_len
         self.drop_rate = drop_rate
@@ -14,13 +13,11 @@ class Linear_S(Model):
         self.dense3 = Dense(fp_len * 4, activation="relu")
         self.dense4 = Dense(fp_len * 2, activation="relu")
         self.dense5 = Dense(fp_len, activation="relu")
-        self.dense6 = Dense(int(fp_len//2), activation="relu")
-        self.dense7 = Dense(int(fp_len//4), activation="relu")
+        self.dense6 = Dense(int(fp_len // 2), activation="relu")
+        self.dense7 = Dense(int(fp_len // 4), activation="relu")
         self.dropout = Dropout(drop_rate)
-        if out_len > 1:
-            self.dense_out = Dense(out_len, activation="softmax")
-        else:
-            self.dense_out = Dense(out_len, activation="sigmoid")
+
+        self.dense_out = Dense(out_len, activation=activation)
 
     def call(self, inputs, training=None):
         x = self.dense1(inputs)
@@ -51,7 +48,6 @@ class Linear_S(Model):
 
 
 class Linear_M(Linear_S):
-
     def __init__(self, *args, **kwargs):
         super(Linear_M, self).__init__(*args, **kwargs)
         self.dense1_2 = Dense(self.fp_len * 3, activation="relu")
@@ -76,7 +72,6 @@ class Linear_M(Linear_S):
 
 
 class Linear_L(Linear_M):
-
     def __init__(self, *args, **kwargs):
         super(Linear_L, self).__init__(*args, **kwargs)
         self.dense2_2 = Dense(self.fp_len * 6, activation="relu")

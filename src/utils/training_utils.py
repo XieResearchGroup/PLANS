@@ -4,17 +4,15 @@ import os
 import numpy as np
 
 
-def init_model(Model, drop_rate=0.3):
-    model = Model(drop_rate=drop_rate)
-    if model.out_len == 1:
-        loss = "binary_crossentropy"
-    else:
-        loss = "categorical_crossentropy"
-    model.compile(
-        loss=loss,
-        optimizer="adam",
-        metrics=["acc"]
-    )
+def init_model(
+    Model,
+    drop_rate=0.3,
+    loss="categorical_crossentropy",
+    out_len=32,
+    activation="softmax",
+):
+    model = Model(drop_rate=drop_rate, out_len=out_len, activation=activation)
+    model.compile(loss=loss, optimizer="adam", metrics=["acc"])
     return model
 
 
@@ -24,10 +22,7 @@ def callback_list(log_path, es_patience, model, learning_rate=1e-6):
 
     # tbcb = TensorBoard(log_path)
     escb = EarlyStopping(
-        "val_acc",
-        patience=es_patience,
-        restore_best_weights=True,
-        mode="max"
+        "val_acc", patience=es_patience, restore_best_weights=True, mode="max"
     )
     lrcb = LearningRateScheduler(lambda e: model.scheduler(e, learning_rate))
     cb_list = [escb, lrcb]
@@ -43,13 +38,13 @@ def training_log(train_his, y_pred, y_truth, log_f):
         truth = np.argmax(y_truth, axis=1)
     # log training history
     for k, v in train_his.history.items():
-        log_f.write(k+"\n")
-        log_f.write(str(v)[1:-1]+"\n\n")
-    log_f.write("="*80+"\n")
+        log_f.write(k + "\n")
+        log_f.write(str(v)[1:-1] + "\n\n")
+    log_f.write("=" * 80 + "\n")
     log_f.write("@prediction-truth\n")
     for pred, tr in zip(predictions, truth):
-        log_f.write(str(pred)+" "+str(tr)+"\n")
-    log_f.write("="*80+"\n")
+        log_f.write(str(pred) + " " + str(tr) + "\n")
+    log_f.write("=" * 80 + "\n")
 
 
 def open_log(log_path):

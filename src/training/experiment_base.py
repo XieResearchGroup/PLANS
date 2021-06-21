@@ -1,5 +1,4 @@
 from functools import partial
-import random
 
 from ..models.linear import Linear_S, Linear_M, Linear_L
 from .train_model import predict_and_mix, plot_history
@@ -25,7 +24,7 @@ class ExperimentBase:
         mixup=None,
         mixup_repeat=None,
         learning_rate=1e-6,
-        drop_rate=0.3
+        drop_rate=0.3,
     ):
         self.data_path = data_path
         self.log_path = log_path
@@ -36,8 +35,8 @@ class ExperimentBase:
         self.rand_seed = rand_seed
         self.mixup = mixup
         self.mixup_repeat = mixup_repeat
-        self.learning_rate=learning_rate
-        self.drop_rate=drop_rate
+        self.learning_rate = learning_rate
+        self.drop_rate = drop_rate
         self.best_loss = dict()
         self.best_acc = dict()
 
@@ -45,10 +44,10 @@ class ExperimentBase:
         x_mix, y_mix = mixup(self.mixup, self.mixup, x, y, repeat=self.mixup_repeat)
         return x_mix, y_mix
 
-    def load_data(self):
+    def load_data(self, cols=["ECFP", "onehot_label"], ratio=0.7, shuffle=True):
         data_loader = CVSLoader(self.data_path, rand_seed=self.rand_seed)
         x_train, y_train, x_test, y_test = data_loader.load_data(
-            ["ECFP", "onehot_label"], ratio=0.7, shuffle=True
+            cols, ratio=ratio, shuffle=shuffle
         )
         convert2vec_float = partial(convert2vec, dtype=float)
         x_train, y_train, x_test, y_test = list(
@@ -56,7 +55,7 @@ class ExperimentBase:
         )
         if self.mixup is not None:
             x_train, y_train = self._mixup(x_train, y_train)
-        x_unlabeled = data_loader.load_unlabeled(["ECFP", "onehot_label"])
+        x_unlabeled = data_loader.load_unlabeled(cols)
         x_unlabeled = convert2vec(x_unlabeled[:, 0], dtype=float)
         return x_train, y_train, x_test, y_test, x_unlabeled
 
@@ -76,6 +75,9 @@ class ExperimentBase:
         log_f,
         log_path,
         n_repeat,
+        activation="softmax",
+        loss="categorical_crossentropy",
+        out_len=32,
     ):
         r""" Train linear model with Noisy Student
         model: the model to be trained
@@ -92,7 +94,13 @@ class ExperimentBase:
         =======================================================================
         return: the trained model, training history
         """
-        model = init_model(model, drop_rate=self.drop_rate)
+        model = init_model(
+            model,
+            drop_rate=self.drop_rate,
+            loss=loss,
+            out_len=out_len,
+            activation=activation,
+        )
         cb_list = callback_list(
             log_path, self.es_patience, model, learning_rate=self.learning_rate
         )
@@ -152,6 +160,9 @@ class ExperimentBase:
         log_f,
         log_path,
         n_repeat,
+        activation="softmax",
+        loss="categorical_crossentropy",
+        out_len=32,
     ):
         r""" Train student linear model with Noisy Student
         student_model: the model to be trained
@@ -176,7 +187,13 @@ class ExperimentBase:
         if self.mixup is not None:
             x_mix, y_mix = self._mixup(x_mix, y_mix)
         # init model
-        model = init_model(student_model, drop_rate=self.drop_rate)
+        model = init_model(
+            student_model,
+            drop_rate=self.drop_rate,
+            loss=loss,
+            out_len=out_len,
+            activation=activation,
+        )
         # callbacks
         cb_list = callback_list(
             log_path, self.es_patience, model, learning_rate=self.learning_rate

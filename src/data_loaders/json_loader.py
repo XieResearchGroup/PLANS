@@ -27,8 +27,8 @@ class JsonLoader(_BaseDataLoader):
     @property
     def data_list(self):
         """Load the json file
-    
-        Returns: 
+
+        Returns:
             The data in json file. dict or list in most cases.
         """
         try:
@@ -107,7 +107,7 @@ class JsonLoader(_BaseDataLoader):
             shuffle (bool): if shuffle the indices.
             nl_symbol: the symbol denoting data with no label in the dataset.
             scaffold_splitting (bool): Use scaffold splitting. (ICLR2020, ContextPred)
-        
+
         Returns:
             data (list): [x_train, y_train, x_test, y_test]
         """

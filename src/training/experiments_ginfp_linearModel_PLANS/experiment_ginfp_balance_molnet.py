@@ -3,37 +3,33 @@
 # no mixup.                                                                         #
 #####################################################################################
 
+from functools import partial
 
 import tensorflow as tf
-import numpy as np
 
 from ...data_loaders.json_loader import JsonLoader
 from ...data_loaders.hdf5_loader import HDF5Loader
-from ...utils.label_convertors import partial2onehot, multilabel2onehot
+from ...utils.label_convertors import convert2vec
 from ...models.linear import Linear_S, Linear_M, Linear_L
 from ..training_args import LMMixupOutsideDataArgs
 from ..experiment_linear_chembl_balance_partial_no_mixup import (
-    ExpLinBalLargeOutsideExploitPartialNoMixup,
+    ExpLinBalLargeOutsideExploitPartial,
 )
 
 
-class ExperimentLinearGinFPBalance(ExpLinBalLargeOutsideExploitPartialNoMixup):
+class ExperimentLinearGinFPBalance(ExpLinBalLargeOutsideExploitPartial):
     def load_data(self):
         data_loader = JsonLoader(self.data_path)
         x_train, y_train, x_test, y_test = data_loader.load_data(
             ratio=0.7, shuffle=True
         )
-        y_train = np.stack(
-            [multilabel2onehot(label, return_type="vec") for label in y_train]
-        ).astype(np.float)
-        y_test = np.stack(
-            [multilabel2onehot(label, return_type="vec") for label in y_test]
-        ).astype(np.float)
+        convert2vec_float = partial(convert2vec, dtype=float)
+        x_train, y_train, x_test, y_test = list(
+            map(convert2vec_float, [x_train, y_train, x_test, y_test])
+        )
         if self.mixup is not None:
             x_train, y_train = self._mixup(x_train, y_train)
         x_unlabeled, y_partial = data_loader.load_unlabeled()
-        for i, label in enumerate(y_partial):
-            y_partial[i] = partial2onehot(label)
 
         outside_data_loader = HDF5Loader(self.outside_data_path, "r")
         return (
@@ -75,6 +71,9 @@ class ExperimentLinearGinFPBalance(ExpLinBalLargeOutsideExploitPartialNoMixup):
             log_f=log_f,
             log_path=log_path,
             n_repeat=self.n_repeat,
+            activation="sigmoid",
+            loss="binary_crossentropy",
+            out_len=12,
         )
         # log results
         self.log_training(trained_model, histories, log_path)
@@ -93,6 +92,9 @@ class ExperimentLinearGinFPBalance(ExpLinBalLargeOutsideExploitPartialNoMixup):
                 log_f=log_f,
                 log_path=log_path,
                 n_repeat=self.n_repeat,
+                activation="sigmoid",
+                loss="binary_crossentropy",
+                out_len=12,
             )
             # log results
             self.log_training(trained_model, histories, log_path)
@@ -100,6 +102,8 @@ class ExperimentLinearGinFPBalance(ExpLinBalLargeOutsideExploitPartialNoMixup):
         log_f.write("best losses:\n {}\n".format(str(self.best_loss)))
         log_f.write("best accuracies:\n {}\n".format(str(self.best_acc)))
         log_f.close()
+
+        self.log_predictions(trained_model, x_test, y_test, log_path)
 
 
 if __name__ == "__main__":

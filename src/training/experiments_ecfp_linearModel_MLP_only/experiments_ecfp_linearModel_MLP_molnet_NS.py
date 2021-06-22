@@ -69,7 +69,8 @@ class Experiment(ExperimentBase):
         x_mix, y_mix = predict_and_mix(
             teacher_model, x_pred, x_train, y_train, shuffle=True
         )
-        x_mix, y_mix = self._mixup(x_mix, y_mix)
+        if self.mixup is not None:
+            x_mix, y_mix = self._mixup(x_mix, y_mix)
         # init model
         model = init_model(
             student_model,
@@ -149,6 +150,8 @@ class Experiment(ExperimentBase):
 
         log_f.write("best losses:\n {}\n".format(str(self.best_loss)))
         log_f.write("best accuracies:\n {}\n".format(str(self.best_acc)))
+
+        self.log_predictions(trained_model, x_test, y_test, log_path)
 
 
 if __name__ == "__main__":

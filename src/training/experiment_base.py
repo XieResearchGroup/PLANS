@@ -1,4 +1,6 @@
+import os
 from functools import partial
+import pickle as pk
 
 from ..models.linear import Linear_S, Linear_M, Linear_L
 from .train_model import predict_and_mix, plot_history
@@ -248,6 +250,16 @@ class ExperimentBase:
         max_acc = find_best(histories, "val_acc", "max")
         self.best_loss[str(trained_model)] = min_loss
         self.best_acc[str(trained_model)] = max_acc
+
+    def log_predictions(self, model, x, y, log_path):
+        y_pred = model.predict(x)
+        results = {
+            "x": x,
+            "y": y,
+            "y_pred": y_pred,
+        }
+        with open(os.path.join(log_path, "predictions.pk"), "wb") as f:
+            pk.dump(results, f)
 
     def run_experiment(self):
         # load training and testing data

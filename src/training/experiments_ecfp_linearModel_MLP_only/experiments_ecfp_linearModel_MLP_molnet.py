@@ -27,6 +27,7 @@ class Experiment(ExperimentBase):
             log_f=log_f,
             log_path=log_path,
             n_repeat=self.n_repeat,
+            activation="sigmoid",
             loss="binary_crossentropy",
             out_len=12,
         )
@@ -36,6 +37,8 @@ class Experiment(ExperimentBase):
         log_f.write("best losses:\n {}\n".format(str(self.best_loss)))
         log_f.write("best accuracies:\n {}\n".format(str(self.best_acc)))
         log_f.close()
+
+        self.log_predictions(trained_model, x_test, y_test, log_path)
 
 
 if __name__ == "__main__":

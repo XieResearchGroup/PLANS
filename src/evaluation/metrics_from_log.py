@@ -7,7 +7,6 @@ from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 
 
 class BaseEvaluator:
-
     def __init__(self, log_file_path, mode="r"):
         self.log_f = open(log_file_path, mode)
 
@@ -23,7 +22,6 @@ class BaseEvaluator:
 
 
 class TrainingLogEvaluator(BaseEvaluator):
-
     def get_predictions(self):
         r""" Readout the predictions from the log file.
         =======================================================================
@@ -102,10 +100,7 @@ class TrainingLogEvaluator(BaseEvaluator):
             multilabeled.append(ml)
         return multilabeled
 
-    def precision_recall_fbeta_scores(self,
-                                      classes=5,
-                                      beta=1,
-                                      average="micro"):
+    def precision_recall_fbeta_scores(self, classes=5, beta=1, average="micro"):
         r""" Calculate precision scores from the results.
         =======================================================================
         return (list): list of precision scores calculated from the results.
@@ -115,7 +110,8 @@ class TrainingLogEvaluator(BaseEvaluator):
         fbetas = list()
         for rst in self._results2multilabel(classes):
             pc, rc, fbeta, _ = precision_recall_fscore_support(
-                rst[0], rst[1], average=average)
+                rst[0], rst[1], average=average
+            )
             precisions.append(pc)
             recalls.append(rc)
             fbetas.append(fbeta)
@@ -160,13 +156,9 @@ class TrainingLogEvaluator(BaseEvaluator):
             counts.append(self.classwise_hits_count_one_result(rst, classes))
         return counts
 
-    def plot_classwise_prediction_bars(self,
-                                       ylim=None,
-                                       index=-1,
-                                       classes=32,
-                                       mask=None,
-                                       save_name=None,
-                                       show=True):
+    def plot_classwise_prediction_bars(
+        self, ylim=None, index=-1, classes=32, mask=None, save_name=None, show=True
+    ):
         r""" Plot bar diagram based on prediction values.
         index (int): the index of result in the results list. Default is -1.
         classes (int): classes in the plot. Default is 32.
@@ -183,8 +175,7 @@ class TrainingLogEvaluator(BaseEvaluator):
                     corrects[i] = 0
                     misses[i] = 0
         axe.bar(ind, corrects, label="Correct")
-        axe.bar(
-            ind, misses, bottom=corrects, label="Missed")
+        axe.bar(ind, misses, bottom=corrects, label="Missed")
         axe.legend()
         axe.set(xlabel="Classes", ylabel="Counts", ylim=ylim)
         if save_name is not None:
@@ -192,13 +183,9 @@ class TrainingLogEvaluator(BaseEvaluator):
         if show:
             fig.show()
 
-    def plot_classwise_correct_and_incorrect_bars(self,
-                                                  ylim=None,
-                                                  index=-1,
-                                                  classes=32,
-                                                  mask=None,
-                                                  save_name=None,
-                                                  show=True):
+    def plot_classwise_correct_and_incorrect_bars(
+        self, ylim=None, index=-1, classes=32, mask=None, save_name=None, show=True
+    ):
         r""" Plot bar diagram based on correct and incorrect predicted values.
         index (int): the index of result in the results list. Default is -1.
         classes (int): classes in the plot. Default is 32.
@@ -215,8 +202,7 @@ class TrainingLogEvaluator(BaseEvaluator):
                     corrects[i] = 0
                     incorrects[i] = 0
         axe.bar(ind, corrects, label="Correct")
-        axe.bar(
-            ind, incorrects, bottom=corrects, label="Incorrect", color="red")
+        axe.bar(ind, incorrects, bottom=corrects, label="Incorrect", color="red")
         axe.legend()
         axe.set(xlabel="Classes", ylabel="Counts", ylim=ylim)
         if save_name is not None:
@@ -242,7 +228,6 @@ class TrainingLogEvaluator(BaseEvaluator):
 
 
 class BaseCalculator:
-
     def __init__(self, evaluators, output_path, mode="w"):
         self.evaluators = evaluators
         self.output_f = open(output_path, mode, encoding="utf-8")

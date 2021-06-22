@@ -43,13 +43,13 @@ class LinearModelTrainingArgs(BaseArgs):
             "--repeat",
             type=int,
             default=3,
-            help="Times to repeat when training the model with " "Noisy Student.",
+            help="Times to repeat when training the model with Noisy Student.",
         )
         self.add_argument(
             "--rand-seed",
             type=int,
             default=None,
-            help="Random seed used to generate training and " "testing data.",
+            help="Random seed used to generate training and testing data.",
         )
         self.add_argument(
             "--learning-rate",
@@ -61,7 +61,7 @@ class LinearModelTrainingArgs(BaseArgs):
             "--drop-rate",
             type=float,
             default=0.3,
-            help="The drop rate of the dropout layers."
+            help="The drop rate of the dropout layers.",
         )
 
 
@@ -78,7 +78,7 @@ class LMMixupArgs(LinearModelTrainingArgs):
             "--mixup",
             default=None,
             type=float,
-            help="The coefficient of the Beta distribution " "in mixup.",
+            help="The coefficient of the Beta distribution in mixup.",
         )
         self.add_argument(
             "--mixup-repeat",

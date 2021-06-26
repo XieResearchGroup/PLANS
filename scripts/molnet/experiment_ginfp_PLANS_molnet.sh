@@ -1,25 +1,25 @@
 #!/bin/bash
 
 EPOCHS=1000
-BATCH_SIZE=128
+BATCH_SIZE=64
 ES_PATIENCE=20
 REPEAT=3
 MIXUP=0.4
 MIXUP_REPEAT=10
 
-for i in {1..5}
-do
-    CUDA_VISIBLE_DEVICES=$1 \
-    python -m src.training.experiments_ginfp_linearModel_PLANS.experiment_ginfp_mixup_molnet \
-    -p ./data/MolNet/tox21_ginfp.json \
-    -e $EPOCHS \
-    -b $BATCH_SIZE \
-    --es-patience $ES_PATIENCE \
-    --log-path ./logs/ginfp/tox21_exploit_partial/no_mixup \
-    --repeat $REPEAT \
-    --rand-seed $i \
-    --learning-rate 1e-5
-done
+# for i in {1..5}
+# do
+#     CUDA_VISIBLE_DEVICES=$1 \
+#     python -m src.training.experiments_ginfp_linearModel_PLANS.experiment_ginfp_mixup_molnet \
+#     -p ./data/MolNet/tox21_ginfp.json \
+#     -e $EPOCHS \
+#     -b $BATCH_SIZE \
+#     --es-patience $ES_PATIENCE \
+#     --log-path ./logs/ginfp/tox21_exploit_partial/no_mixup \
+#     --repeat $REPEAT \
+#     --rand-seed $i \
+#     --learning-rate 1e-5
+# done
 
 
 for i in {1..5}
@@ -34,7 +34,8 @@ do
     --repeat $REPEAT \
     --mixup $MIXUP \
     --mixup-repeat $MIXUP_REPEAT \
-    --rand-seed $i
+    --rand-seed $i \
+    --learning-rate 1e-5
 done
 
 # for i in 0 1029 812 204 6987
@@ -61,7 +62,7 @@ done
 #     -e $EPOCHS \
 #     -b $BATCH_SIZE \
 #     --es-patience $ES_PATIENCE \
-#     --log-path ./logs/ginfp/tox21_chembl24_balanced_partial_mixup \
+#     --log-path ./logs/ginfp/tox21_chembl24_balanced_partial/mixup \
 #     --repeat $REPEAT \
 #     --rand-seed $i \
 #     --mixup $MIXUP \

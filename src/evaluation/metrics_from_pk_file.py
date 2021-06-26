@@ -12,37 +12,61 @@ from collections import defaultdict
 from statistics import mean, stdev
 import json
 
-import numpy as np
-from sklearn.metrics import roc_auc_score, f1_score, precision_score, recall_score
+from sklearn.preprocessing import binarize
+from sklearn.metrics import (
+    roc_auc_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    average_precision_score,
+)
 
 
 def get_auc(predictions):
     return roc_auc_score(predictions["y"], predictions["y_pred"], average="micro")
 
 
-def get_f1(predictions):
-    return f1_score(predictions["y"], np.round(predictions["y_pred"]), average="micro",)
+def get_f1(predictions, threshold=0.5):
+    return f1_score(
+        predictions["y"],
+        binarize(predictions["y_pred"], threshold=threshold),
+        average="micro",
+    )
 
 
-def get_precision(predictions):
+def get_precision(predictions, threshold=0.5):
     return precision_score(
-        predictions["y"], np.round(predictions["y_pred"]), average="micro",
+        predictions["y"],
+        binarize(predictions["y_pred"], threshold=threshold),
+        average="micro",
     )
 
 
-def get_recall(predictions):
+def get_recall(predictions, threshold=0.5):
     return recall_score(
-        predictions["y"], np.round(predictions["y_pred"]), average="micro",
+        predictions["y"],
+        binarize(predictions["y_pred"], threshold=threshold),
+        average="micro",
     )
 
 
-def get_scores(path, scores={}):
+def get_ap(predictions):
+    return average_precision_score(
+        predictions["y"], predictions["y_pred"], average="micro"
+    )
+
+
+def get_scores(path, scores={}, threshold=0.5):
     with open(path, "rb") as f:
         predictions = pk.load(f)
-    scores["auc"].append(get_auc(predictions))
-    scores["F1"].append(get_f1(predictions))
-    scores["recall"].append(get_recall(predictions))
-    scores["precision"].append(get_precision(predictions))
+    precision = get_precision(predictions, threshold=threshold)
+    if precision > 0:
+        for metric in ["f1", "recall", "precision"]:
+            scores[metric].append(
+                globals()[f"get_{metric}"](predictions, threshold=threshold)
+            )
+    for metric in ["auc", "ap"]:
+        scores[metric].append(globals()[f"get_{metric}"](predictions))
 
 
 class Statistics:
@@ -61,13 +85,17 @@ class Statistics:
             json.dump(self.parse_scores(), f)
 
 
-def analyze(path):
+def analyze(path, threshold=0.5):
     scores = defaultdict(list)
     for experiment in os.scandir(path):
         if experiment.name == ".ipynb_checkpoints":
             continue
         if experiment.is_dir():
-            get_scores(os.path.join(experiment.path, "predictions.pk"), scores)
+            get_scores(
+                os.path.join(experiment.path, "predictions.pk"),
+                scores,
+                threshold=threshold,
+            )
     logger = Statistics(scores)
     print(logger.parse_scores())
     logger.write(path)
@@ -78,5 +106,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", type=str, help="Path to the log directory.")
+    parser.add_argument(
+        "-t",
+        "--threshold",
+        type=float,
+        default=0.5,
+        help="Threshold to binarize the predictions.",
+    )
     args = parser.parse_args()
-    analyze(args.path)
+    analyze(args.path, threshold=args.threshold)

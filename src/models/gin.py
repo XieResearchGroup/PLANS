@@ -207,12 +207,12 @@ class GraphCNN(tf.keras.Model):
         graph_pool = tf.cast(graph_pool, tf.float32)
         return graph_pool
 
-    def maxpool(self, h, padded_neighbor_list):
-        # Element-wise minimum will never affect max-pooling
-        dummy = tf.reduce_min(tf_output, axis=0, keepdims=True)
-        h_with_dummy = tf.concat([tf_output, tf_dummy], 0)
-        pooled_rep = tf.reduce_max(h_with_dummy[padded_neighbor_list], axis=1)
-        return pooled_rep
+    # def maxpool(self, h, padded_neighbor_list):
+    #     # Element-wise minimum will never affect max-pooling
+    #     dummy = tf.reduce_min(tf_output, axis=0, keepdims=True)
+    #     h_with_dummy = tf.concat([tf_output, tf_dummy], 0)
+    #     pooled_rep = tf.reduce_max(h_with_dummy[padded_neighbor_list], axis=1)
+    #     return pooled_rep
 
     def next_layer_eps(self, h, layer, padded_neighbor_list=None, Adj_block=None):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
@@ -305,4 +305,3 @@ class GraphCNN(tf.keras.Model):
             score_over_layer += dropped_outcome
 
         return score_over_layer  # This actually provides the value for the prediction
-
